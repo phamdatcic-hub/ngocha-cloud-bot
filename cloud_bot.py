@@ -163,53 +163,64 @@ def convert_onedrive_url(raw_url: str) -> str:
 
 def fetch_master_workbook():
     """
-    Tải file Sổ Master từ OneDrive Direct Link hoặc đọc file cục bộ (nếu có).
+    Tải file Sổ Master:
+    1. Ưu tiên tải trực tiếp từ GitHub Cloud Repo (cập nhật mới nhất từ máy tính)
+    2. Dự phòng đọc file cục bộ đã đóng gói trong container
+    3. Dự phòng tải từ OneDrive (nếu có cấu hình)
     Chạy 100% trong bộ nhớ RAM qua io.BytesIO, CHẾ ĐỘ CHỈ ĐỌC (READ-ONLY).
     """
     if openpyxl is None:
         raise ImportError("Thiếu thư viện openpyxl để đọc Sổ Master.")
 
     file_bytes = None
-    direct_url = convert_onedrive_url(ONEDRIVE_FILE_URL)
 
-    # 1. Tải từ OneDrive nếu có đường dẫn
-    if direct_url:
-        try:
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
-            }
-            if requests:
-                resp = requests.get(direct_url, headers=headers, timeout=40, allow_redirects=True)
-                if resp.status_code == 200 and resp.content.startswith(b"PK\x03\x04"):
-                    file_bytes = resp.content
-            else:
-                req = urllib.request.Request(direct_url, headers=headers)
-                with urllib.request.urlopen(req, timeout=40) as response:
-                    content = response.read()
-                    if content.startswith(b"PK\x03\x04"):
-                        file_bytes = content
-        except Exception as e:
-            print(f"[{datetime.now()}] [WARN] Không thể tải từ OneDrive: {e}")
+    # 1. Tải trực tiếp từ GitHub Cloud Repo (luôn có bản mới nhất do máy tính tự động đồng bộ)
+    github_url = "https://raw.githubusercontent.com/phamdatcic-hub/ngocha-cloud-bot/main/So%20Theo%20Doi%20Ke%20Toan%20Ngoc%20Ha.xlsx"
+    try:
+        req = urllib.request.Request(github_url, headers={"User-Agent": "NgocHa-Cloud-Bot", "Cache-Control": "no-cache"})
+        with urllib.request.urlopen(req, timeout=25) as resp:
+            content = resp.read()
+            if content.startswith(b"PK\x03\x04"):
+                file_bytes = content
+                print(f"[{datetime.now()}] [INFO] Đã tải Sổ Master trực tiếp từ GitHub Cloud ({len(file_bytes)} bytes) thành công!")
+    except Exception as ge:
+        print(f"[{datetime.now()}] [WARN] Không tải được từ GitHub Cloud raw: {ge}")
 
-    # 2. Dự phòng đọc file cục bộ nếu chạy nội bộ hoặc có sẵn file
+    # 2. Đọc file cục bộ nếu có sẵn trong thư mục
     if not file_bytes:
         local_candidates = [
+            "So Theo Doi Ke Toan Ngoc Ha.xlsx",
+            os.path.join(os.getcwd(), "So Theo Doi Ke Toan Ngoc Ha.xlsx"),
+            os.path.join(os.path.dirname(__file__), "So Theo Doi Ke Toan Ngoc Ha.xlsx"),
             os.path.join(os.path.dirname(__file__), "..", "01 So Sach Ke Toan", "So Theo Doi Ke Toan Ngoc Ha.xlsx"),
-            os.path.join(os.getcwd(), "01 So Sach Ke Toan", "So Theo Doi Ke Toan Ngoc Ha.xlsx"),
-            "So Theo Doi Ke Toan Ngoc Ha.xlsx"
+            os.path.join(os.getcwd(), "01 So Sach Ke Toan", "So Theo Doi Ke Toan Ngoc Ha.xlsx")
         ]
         for p in local_candidates:
             if os.path.exists(p):
                 try:
                     with open(p, "rb") as f:
                         file_bytes = f.read()
-                    print(f"[{datetime.now()}] [INFO] Đã đọc Sổ Master từ đường dẫn cục bộ: {p}")
+                    print(f"[{datetime.now()}] [INFO] Đã đọc Sổ Master từ file cục bộ: {p} ({len(file_bytes)} bytes)")
                     break
                 except Exception:
                     pass
 
+    # 3. Dự phòng tải từ OneDrive nếu các cách trên chưa được
     if not file_bytes:
-        raise FileNotFoundError("Chưa tìm thấy nguồn dữ liệu Sổ Master (Cần đặt ONEDRIVE_FILE_URL hoặc copy file vào thư mục).")
+        direct_url = convert_onedrive_url(ONEDRIVE_FILE_URL)
+        if direct_url:
+            try:
+                headers = {"User-Agent": "Mozilla/5.0"}
+                req = urllib.request.Request(direct_url, headers=headers)
+                with urllib.request.urlopen(req, timeout=30) as response:
+                    content = response.read()
+                    if content.startswith(b"PK\x03\x04"):
+                        file_bytes = content
+            except Exception as oe:
+                print(f"[{datetime.now()}] [WARN] Không tải được từ OneDrive: {oe}")
+
+    if not file_bytes:
+        raise FileNotFoundError("Chưa tìm thấy nguồn dữ liệu Sổ Master trên Cloud!")
 
     # Mở workbook ở chế độ data_only = True để lấy số liệu thực tế đã tính
     buf = io.BytesIO(file_bytes)
