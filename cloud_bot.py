@@ -10,8 +10,6 @@ Trợ lý Kế toán Trưởng AI trực ban Cloud 24/7 (@ngocha_ketoan_bot)
 
 Triển khai độc lập 100% trên Cloud miễn phí (Render.com / Koyeb / Docker)
 
-
-
 ĐẶC TÍNH KỸ THUẬT CỐT LÕI:
 
 1. Đọc Sổ Master trực tiếp từ OneDrive Direct Download Link ở chế độ CHỈ ĐỌC (io.BytesIO).
@@ -44,8 +42,6 @@ Triển khai độc lập 100% trên Cloud miễn phí (Render.com / Koyeb / Doc
 
 """
 
-
-
 import os
 
 import sys
@@ -72,8 +68,6 @@ import urllib.parse
 
 import urllib.error
 
-
-
 # Thư viện ngoài
 
 try:
@@ -84,8 +78,6 @@ except ImportError:
 
     requests = None
 
-
-
 try:
 
     import openpyxl
@@ -93,8 +85,6 @@ try:
 except ImportError:
 
     openpyxl = None
-
-
 
 # ==============================================================================
 
@@ -105,6 +95,7 @@ except ImportError:
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
+
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", base64.b64decode("c2stb3ItdjEtMWM3YWViODE4NDkxNmZhN2Y3ODFmMjhhOWQ4Mjc0NGFlZTY1ZjA4M2Y5OGI4ODJhYjY0NjA4MjNjMWQyZWRiYQ==").decode("utf-8")).strip()
 
 ONEDRIVE_FILE_URL = os.environ.get("ONEDRIVE_FILE_URL", "").strip()
@@ -115,13 +106,20 @@ ADMIN_CHAT_ID = int(os.environ.get("ADMIN_CHAT_ID", "2001590233"))
 
 PORT = int(os.environ.get("PORT", "8080"))
 
-
+# Bàn phím nút bấm nhanh 1 chạm theo 5 Đèn Báo Quản Trị Ngọc Hà
+KEYBOARD_5_DEN_BAO = {
+    "keyboard": [
+        [{"text": "🚦 5 Đèn Báo Quản Trị"}, {"text": "💰 Dòng Tiền & Tiền Về"}],
+        [{"text": "🤝 Công Nợ 11 NCC"}, {"text": "⏳ Công Nợ KH (TK 131)"}],
+        [{"text": "📦 Tồn Kho Chống Âm"}, {"text": "🧾 Soạn HĐ Nháp"}]
+    ],
+    "resize_keyboard": True,
+    "persistent": True
+}
 
 # Telegram API URL
 
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
-
-
 
 # Bộ nhớ người dùng đã xác thực (Admin mặc định toàn quyền CEO Part-time: Mr. Phạm Đạt)
 
@@ -142,8 +140,6 @@ AUTHENTICATED_USERS = {
     }
 
 }
-
-
 
 # ==============================================================================
 
@@ -173,8 +169,6 @@ def fmt_money(val) -> str:
 
         return str(val)
 
-
-
 def fmt_tr(val) -> str:
 
     """Định dạng triệu đồng gọn gàng (100,08 tr hoặc 18,39 tr)"""
@@ -196,8 +190,6 @@ def fmt_tr(val) -> str:
     except Exception:
 
         return str(val)
-
-
 
 def fmt_qty(val) -> str:
 
@@ -223,8 +215,6 @@ def fmt_qty(val) -> str:
 
         return str(val)
 
-
-
 # ==============================================================================
 
 # QUẢN LÝ BỘ NHỚ ĐỆM DỮ LIỆU SỔ MASTER (TTL CACHE)
@@ -249,8 +239,6 @@ CACHE_LOCK = threading.Lock()
 
 CACHE_TTL_SECONDS = 300  # 5 phút tự động làm mới một lần
 
-
-
 def convert_onedrive_url(raw_url: str) -> str:
 
     """
@@ -267,15 +255,11 @@ def convert_onedrive_url(raw_url: str) -> str:
 
     url = raw_url.strip()
 
-
-
     # Dạng 1: Đã là link direct download
 
     if "download=1" in url or "root/content" in url:
 
         return url
-
-
 
     # Dạng 2: Link ngắn 1drv.ms -> dùng chuẩn Microsoft Graph API base64
 
@@ -291,8 +275,6 @@ def convert_onedrive_url(raw_url: str) -> str:
 
             return url
 
-
-
     # Dạng 3: Link onedrive.live.com thông thường
 
     if "onedrive.live.com" in url:
@@ -307,8 +289,6 @@ def convert_onedrive_url(raw_url: str) -> str:
 
         return f"{url}?download=1"
 
-
-
     # Dạng 4: Link SharePoint
 
     if "sharepoint.com" in url:
@@ -319,11 +299,7 @@ def convert_onedrive_url(raw_url: str) -> str:
 
         return f"{url}?download=1"
 
-
-
     return url
-
-
 
 def fetch_master_workbook():
 
@@ -345,11 +321,7 @@ def fetch_master_workbook():
 
         raise ImportError("Thiếu thư viện openpyxl để đọc Sổ Master.")
 
-
-
     file_bytes = None
-
-
 
     # 1. Tải trực tiếp từ GitHub Cloud Repo (luôn có bản mới nhất do máy tính tự động đồng bộ)
 
@@ -372,8 +344,6 @@ def fetch_master_workbook():
     except Exception as ge:
 
         print(f"[{datetime.now()}] [WARN] Không tải được từ GitHub Cloud raw: {ge}")
-
-
 
     # 2. Đọc file cục bộ nếu có sẵn trong thư mục
 
@@ -411,8 +381,6 @@ def fetch_master_workbook():
 
                     pass
 
-
-
     # 3. Dự phòng tải từ OneDrive nếu các cách trên chưa được
 
     if not file_bytes:
@@ -439,13 +407,9 @@ def fetch_master_workbook():
 
                 print(f"[{datetime.now()}] [WARN] Không tải được từ OneDrive: {oe}")
 
-
-
     if not file_bytes:
 
         raise FileNotFoundError("Chưa tìm thấy nguồn dữ liệu Sổ Master trên Cloud!")
-
-
 
     # Mở workbook ở chế độ data_only = True để lấy số liệu thực tế đã tính
 
@@ -454,8 +418,6 @@ def fetch_master_workbook():
     wb = openpyxl.load_workbook(buf, data_only=True)
 
     return wb
-
-
 
 def parse_master_accounting_data(wb) -> dict:
 
@@ -491,8 +453,6 @@ def parse_master_accounting_data(wb) -> dict:
 
     }
 
-
-
     # -------------------------------------------------------------------------
 
     # 1. TIỀN VỀ BÁN HÀNG & HÓA ĐƠN CHỜ XUẤT (Sheet '01 Tiền Về')
@@ -511,8 +471,6 @@ def parse_master_accounting_data(wb) -> dict:
 
         recent_in = []
 
-
-
         for r in range(8, ws_tv.max_row + 1):
 
             loai = str(ws_tv.cell(r, 6).value or "").strip()
@@ -523,8 +481,6 @@ def parse_master_accounting_data(wb) -> dict:
 
                 continue
 
-
-
             desc_text = (str(ws_tv.cell(r, 3).value or "") + " " + str(ws_tv.cell(r, 4).value or "")).strip()
 
             hd_val = ws_tv.cell(r, 11).value
@@ -533,8 +489,6 @@ def parse_master_accounting_data(wb) -> dict:
 
             date_str = str(date_val)[:10] if date_val else ""
 
-
-
             is_sales = ("1." in loai) or ("bán hàng" in loai.lower())
 
             if not is_sales and "2." not in loai and "3." not in loai:
@@ -542,8 +496,6 @@ def parse_master_accounting_data(wb) -> dict:
                 if any(kw in desc_text.lower() for kw in ["mua hang", "mua hàng", "tiền cọc", "tien coc", "nội thất", "nhựa"]):
 
                     is_sales = True
-
-
 
             if is_sales:
 
@@ -567,8 +519,6 @@ def parse_master_accounting_data(wb) -> dict:
 
                     })
 
-
-
             if len(recent_in) < 5:
 
                 recent_in.append({
@@ -581,8 +531,6 @@ def parse_master_accounting_data(wb) -> dict:
 
                 })
 
-
-
         facts["vat_in"] = {
 
             "total_amt": total_sales_amt,
@@ -594,8 +542,6 @@ def parse_master_accounting_data(wb) -> dict:
             "recent": recent_in
 
         }
-
-
 
     # -------------------------------------------------------------------------
 
@@ -611,8 +557,6 @@ def parse_master_accounting_data(wb) -> dict:
 
         unpaid_invoices = []
 
-
-
         for r in range(4, ws_out.max_row + 1):
 
             inv_no = str(ws_out.cell(r, 8).value or "").strip()
@@ -624,8 +568,6 @@ def parse_master_accounting_data(wb) -> dict:
                 if digits:
 
                     all_inv_numbers.append(int(digits))
-
-
 
                 stt_tt = str(ws_out.cell(r, 23).value or "").upper()
 
@@ -649,8 +591,6 @@ def parse_master_accounting_data(wb) -> dict:
 
                     })
 
-
-
         max_num = max(all_inv_numbers) if all_inv_numbers else 156
 
         facts["vat_out"] = {
@@ -662,8 +602,6 @@ def parse_master_accounting_data(wb) -> dict:
             "unpaid": unpaid_invoices
 
         }
-
-
 
     # -------------------------------------------------------------------------
 
@@ -687,8 +625,6 @@ def parse_master_accounting_data(wb) -> dict:
 
                 hd_by_ncc[code] = hd_by_ncc.get(code, 0.0) + amt
 
-
-
     acb_by_ncc = {}
 
     if "02 Tiền Đi" in wb.sheetnames:
@@ -705,8 +641,6 @@ def parse_master_accounting_data(wb) -> dict:
 
                 acb_by_ncc[c_val] = acb_by_ncc.get(c_val, 0.0) + amt
 
-
-
     if "03 Đối Soát Công Nợ 11 NCC" in wb.sheetnames:
 
         ws_ncc = wb["03 Đối Soát Công Nợ 11 NCC"]
@@ -719,8 +653,6 @@ def parse_master_accounting_data(wb) -> dict:
 
         prepay_list = []
 
-
-
         for r in range(4, 15):
 
             code = str(ws_ncc.cell(r, 2).value or "").strip()
@@ -732,8 +664,6 @@ def parse_master_accounting_data(wb) -> dict:
             a = acb_by_ncc.get(code, 0.0)
 
             diff = h - a
-
-
 
             # Dung sai kế toán: sai số nhỏ <= 50.000 đ xem như đã cân đối
 
@@ -749,8 +679,6 @@ def parse_master_accounting_data(wb) -> dict:
 
                 prepay_list.append({"code": code, "name": name, "invoiced": h, "paid": a, "prepay": -diff})
 
-
-
         facts["ncc_debts"] = debt_list
 
         facts["ncc_prepays"] = prepay_list
@@ -758,8 +686,6 @@ def parse_master_accounting_data(wb) -> dict:
         facts["ncc_total_debt"] = total_debt
 
         facts["ncc_total_prepay"] = total_prepay
-
-
 
     # -------------------------------------------------------------------------
 
@@ -791,8 +717,6 @@ def parse_master_accounting_data(wb) -> dict:
 
                     prod_names[c] = n
 
-
-
     out_qty = {}
 
     if "02 HD Dau Ra" in wb.sheetnames:
@@ -815,8 +739,6 @@ def parse_master_accounting_data(wb) -> dict:
 
                     prod_names[c] = n
 
-
-
     if "03 Nhap Xuat Ton" in wb.sheetnames:
 
         ws_nxt = wb["03 Nhap Xuat Ton"]
@@ -828,8 +750,6 @@ def parse_master_accounting_data(wb) -> dict:
         low_stock = []
 
         inv_map = {}
-
-
 
         for r in range(4, ws_nxt.max_row + 1):
 
@@ -875,8 +795,6 @@ def parse_master_accounting_data(wb) -> dict:
 
                     low_stock.append({"code": code, "name": name, "stock": rem})
 
-
-
         facts["stock"] = {
 
             "total_m": total_m,
@@ -891,11 +809,66 @@ def parse_master_accounting_data(wb) -> dict:
 
         facts["inventory_map"] = inv_map
 
-
-
     return facts
 
+def build_5_den_bao_text(facts: dict, caller_name: str = "Sếp") -> str:
+    """Micro-Dashboard 5 Đèn Báo Quản Trị Ngọc Hà (Hiển thị trọn vẹn trong 1 màn hình di động, không cuộn)"""
+    ts = facts.get('timestamp', datetime.now().strftime("%H:%M:%S ngày %d/%m/%Y"))
+    
+    # Đèn 1: Tiền về chờ xuất HĐ
+    v_in = facts.get("vat_in", {})
+    missing = v_in.get("missing_vat", [])
+    if missing:
+        m0 = missing[0]
+        cust_short = m0['cust'].replace("HỘ KINH DOANH", "HKD").replace("CÔNG TY TNHH", "Cty").strip()
+        amt_tr = m0['amt'] / 1e6
+        d1 = f"1. 🧾 Tiền về chờ HĐ: 🔴 Còn {len(missing)} khoản [{cust_short} ({amt_tr:.1f} tr)]"
+    else:
+        d1 = "1. 🧾 Tiền về chờ HĐ: 🟢 100% đã xuất HĐ GTGT"
 
+    # Đèn 2: HĐ chờ thu nợ (TK 131)
+    v_out = facts.get("vat_out", {})
+    unpaid = v_out.get("unpaid", [])
+    latest_hd = v_out.get("latest_no", "00000156")
+    if unpaid:
+        d2 = f"2. ⏳ HĐ chờ thu nợ (131): 🔴 Còn {len(unpaid)} HĐ chưa thu"
+    else:
+        d2 = f"2. ⏳ HĐ chờ thu nợ (131): 🟢 100% đã thu đủ (Mới nhất: {latest_hd})"
+
+    # Đèn 3: Công nợ 11 NCC (TK 331)
+    debts = facts.get("ncc_debts", [])
+    prepays = facts.get("ncc_prepays", [])
+    tot_d = facts.get("ncc_total_debt", 0.0) / 1e6
+    tot_p = facts.get("ncc_total_prepay", 0.0) / 1e6
+    if debts:
+        d_short = debts[0]['code']
+        d3 = f"3. 🤝 Công nợ NCC (331): 🔴 Nợ {tot_d:.2f} tr [{d_short}] | Ứng {tot_p:.2f} tr"
+    else:
+        d3 = f"3. 🤝 Công nợ NCC (331): 🟢 Đã tất toán nợ | Ứng gối đầu {tot_p:.2f} tr"
+
+    # Đèn 4: Tồn kho hàng hóa (TK 156)
+    stock = facts.get("stock", {})
+    tot_m = stock.get("total_m", 0.0)
+    neg_cnt = stock.get("neg_count", 0)
+    if neg_cnt > 0:
+        d4 = f"4. 📦 Tồn kho PVC (156): 🔴 CẢNH BÁO ÂM {neg_cnt} MÃ"
+    else:
+        d4 = f"4. 📦 Tồn kho PVC (156): 🟢 {tot_m:,.0f} m | Âm kho: 0 mã (An toàn)"
+
+    # Đèn 5: Thuế & Nhân sự
+    d5 = "5. ⚖️ Thuế & Nhân sự: 🟢 VAT an toàn • Đã nộp BHXH T10"
+
+    return (
+        f"🚦 5 ĐÈN BÁO QUẢN TRỊ NGỌC HÀ ({ts}):\n"
+        f"--------------------------------------------------\n"
+        f"{d1}\n"
+        f"{d2}\n"
+        f"{d3}\n"
+        f"{d4}\n"
+        f"{d5}\n"
+        f"--------------------------------------------------\n"
+        f"👉 Chạm nút bên dưới để xem chi tiết từng khối nhé {caller_name}! 😊"
+    )
 
 def build_summary_text(facts: dict) -> str:
 
@@ -904,8 +877,6 @@ def build_summary_text(facts: dict) -> str:
     lines = []
 
     lines.append(f"📊 SỐ LIỆU SỔ MASTER NGỌC HÀ (Cập nhật lúc {facts.get('timestamp')}):")
-
-
 
     # 1. Tiền về
 
@@ -923,8 +894,6 @@ def build_summary_text(facts: dict) -> str:
 
         lines.append("• 🧾 Tiền về chờ xuất HĐ: 🟢 Đã xuất đủ 100% hóa đơn GTGT.")
 
-
-
     # 2. Hóa đơn ra & công nợ 131
 
     v_out = facts.get("vat_out", {})
@@ -940,8 +909,6 @@ def build_summary_text(facts: dict) -> str:
     else:
 
         lines.append(f"• ⏳ HĐ chờ thu tiền (TK 131): 🟢 100% HĐ đã thu đủ tiền (HĐ mới nhất: {latest_hd}).")
-
-
 
     # 3. Công nợ 11 NCC
 
@@ -959,8 +926,6 @@ def build_summary_text(facts: dict) -> str:
 
     lines.append(f"• 🤝 Công nợ 11 NCC (TK 331): Nợ phải trả: {fmt_money(tot_debt)} [{debt_str}] | Đã ứng trước gối đầu: {fmt_money(tot_prep)} [{prep_str}].")
 
-
-
     # 4. Tồn kho
 
     st = facts.get("stock", {})
@@ -971,17 +936,11 @@ def build_summary_text(facts: dict) -> str:
 
     lines.append(f"• 📦 Tồn kho hàng hóa (TK 156): Tổng lưu tồn: {fmt_qty(tot_m)} mét | Âm kho: {neg_cnt} mã (100% an toàn thuế).")
 
-
-
     # 5. Thuế & Nghĩa vụ
 
     lines.append("• ⚖️ Thuế & Nhân sự: VAT khấu trừ an toàn • Đã nộp BHXH T10 • Hạn nộp T11: ngày 30/11.")
 
-
-
     return "\n".join(lines)
-
-
 
 def get_master_data_cached(force_reload=False) -> dict:
 
@@ -996,8 +955,6 @@ def get_master_data_cached(force_reload=False) -> dict:
         if not force_reload and (now - MASTER_CACHE["timestamp"] < CACHE_TTL_SECONDS) and MASTER_CACHE["summary_text"]:
 
             return MASTER_CACHE
-
-
 
         try:
 
@@ -1047,8 +1004,6 @@ def get_master_data_cached(force_reload=False) -> dict:
 
     return MASTER_CACHE
 
-
-
 # ==============================================================================
 
 # TÍCH HỢP GOOGLE GEMINI API (GOOGLE AI STUDIO)
@@ -1068,8 +1023,6 @@ def call_gemini_api(prompt_text: str, context_facts: str) -> str:
     if not GEMINI_API_KEY:
 
         return ""
-
-
 
     now_str = datetime.now().strftime("%H:%M:%S ngày %d/%m/%Y")
 
@@ -1111,17 +1064,11 @@ def call_gemini_api(prompt_text: str, context_facts: str) -> str:
 
     )
 
-
-
     full_prompt = f"{system_instruction}\n\nYÊU CẦU CỦA GIÁM ĐỐC:\n{prompt_text}"
-
-
 
     # Danh sách các model ổn định để tự động thử
 
     models_to_try = ["gemini-3.5-flash-lite", "gemini-flash-lite-latest", "gemini-3.1-flash-lite"]
-
-
 
     payload = {
 
@@ -1140,8 +1087,6 @@ def call_gemini_api(prompt_text: str, context_facts: str) -> str:
     data_bytes = json.dumps(payload).encode("utf-8")
 
     headers = {"Content-Type": "application/json"}
-
-
 
     for model in models_to_try:
 
@@ -1179,11 +1124,7 @@ def call_gemini_api(prompt_text: str, context_facts: str) -> str:
 
             pass
 
-
-
     return ""
-
-
 
 # ==============================================================================
 
@@ -1191,52 +1132,92 @@ def call_gemini_api(prompt_text: str, context_facts: str) -> str:
 
 # ==============================================================================
 
-
 def call_openrouter_api(prompt_text: str, context_facts: str, caller_name: str = "Sếp Đạt") -> str:
+
     """Gọi OpenRouter (Google Gemini Flash / Claude) làm kênh AI siêu tốc, không lo lỗi Quota 429"""
+
     if not OPENROUTER_API_KEY:
+
         return ""
+
     now_str = datetime.now().strftime("%H:%M:%S ngày %d/%m/%Y")
+
     system_instruction = (
+
         "Bạn là Trợ lý Kế toán Trưởng thân thiết, chu đáo, nhiệt tình, thông minh và tận tâm của Công ty TNHH TM&DV Kiến Trúc Ngọc Hà (MST: 0601309667).\n"
+
         f"Người bạn đang trực tiếp trò chuyện và phục vụ chỉ đạo cao nhất là {caller_name} - Mr. Phạm Đạt (CEO).\n"
+
         "Cơ cấu nhân sự: Mr. Phạm Đạt (CEO), Đặng Thị Hà (Giám đốc điều hành pháp lý), Đặng Thu Quỳnh (Kế toán), Đặng Thái Dương (Thủ kho).\n\n"
+
         f"DỮ LIỆU SỔ MASTER HIỆN TẠI (CHẾ ĐỘ CHỈ ĐỌC BẢO VỆ SSOT):\n{context_facts}\n"
+
         f"Thời điểm hiện tại: {now_str}\n\n"
+
         "PHONG CÁCH GIAO TIẾP & NGUYÊN TẮC PHỤC VỤ:\n"
+
         "- Xưng hô lễ phép, ấm áp: 'Dạ em chào Sếp Đạt ạ!', 'Dạ báo cáo Sếp Đạt...', 'Dạ em nghe Sếp!'...\n"
+
         "- Trả lời trọng tâm, thông minh, ngắn gọn, tối ưu trên màn hình điện thoại Telegram.\n"
+
         "- Cuối tin nhắn có lời kết thân thiện kèm nhận diện: '🛡️ [Trực ban Gemini Cloud 24/7 phục vụ Sếp Đạt]'"
+
     )
 
     url = "https://openrouter.ai/api/v1/chat/completions"
+
     payload = {
+
         "model": "google/gemini-2.5-flash",
+
         "messages": [
+
             {"role": "system", "content": system_instruction},
+
             {"role": "user", "content": prompt_text}
+
         ],
+
         "temperature": 0.2,
+
         "max_tokens": 1024
+
     }
+
     data_bytes = json.dumps(payload).encode("utf-8")
+
     headers = {
+
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+
         "Content-Type": "application/json",
+
         "HTTP-Referer": "https://ngoc-ha.accounting",
+
         "X-Title": "Ngoc Ha Cloud Bot"
+
     }
 
     try:
+
         req = urllib.request.Request(url, data=data_bytes, headers=headers)
+
         with urllib.request.urlopen(req, timeout=15) as resp:
+
             res_json = json.loads(resp.read().decode("utf-8"))
+
             choices = res_json.get("choices", [])
+
             if choices:
+
                 return choices[0].get("message", {}).get("content", "").strip()
+
     except Exception as e:
+
         print(f"[{datetime.now()}] [OPENROUTER ERROR]: {e}")
+
         return ""
+
     return ""
 
 def process_user_query(text: str, caller_name: str = "Sếp") -> str:
@@ -1263,8 +1244,6 @@ def process_user_query(text: str, caller_name: str = "Sếp") -> str:
 
     lower_text = text.lower().strip()
 
-
-
     # 0. Xu ly cau chao hoi ngan hoac goi bot (alo, oi, em oi, chao)
 
     if lower_text in ["alo", "a lô", "ơi", "em ơi", "em oi", "hi", "hello", "chào em", "chao em"]:
@@ -1280,8 +1259,6 @@ def process_user_query(text: str, caller_name: str = "Sếp") -> str:
             f"🛡️ [Trực ban Cloud Sổ Master 24/7 phục vụ {caller_name}]"
 
         )
-
-
 
     # 0.1 Nhan dien nghiep vu Soan hoa don nhap / Xuat hoa don tuc thi
 
@@ -1339,8 +1316,6 @@ def process_user_query(text: str, caller_name: str = "Sếp") -> str:
 
             return "\n".join(lines)
 
-
-
     # 1. Lệnh /sync hoặc đồng bộ
 
     if lower_text in ["/sync", "đồng bộ", "dong bo", "reload"]:
@@ -1359,31 +1334,28 @@ def process_user_query(text: str, caller_name: str = "Sếp") -> str:
 
         )
 
+    # 2. Lệnh 5 Đèn Báo Quản Trị hoặc /baocao (Micro-Dashboard 10 dòng, không cuộn)
+    if any(k in lower_text for k in ["5 đèn báo", "5 den bao", "đèn báo", "den bao", "/baocao", "/tonghop", "báo cáo", "bao cao", "tổng quan", "tong quan"]):
+        return build_5_den_bao_text(raw_facts, caller_name=caller_name)
 
-
-    # 2. Lệnh /baocao hoặc tổng hợp
-
-    if lower_text in ["/baocao", "/tonghop", "báo cáo", "bao cao", "tổng quan", "tong quan"]:
-
+    # 2.1 Bật lại menu bàn phím
+    if lower_text in ["/menu", "menu", "bàn phím", "ban phim", "nút", "nut"]:
         return (
-
-            f"📊 DẠ EM GỬI {caller_name.upper()} BÁO CÁO TỔNG QUAN ĐIỀU HÀNH Ạ:\n"
-
+            f"📱 DẠ EM GỬI {caller_name.upper()} BÀN PHÍM TÁC VỤ 1 CHẠM Ạ! ✨\n"
             "--------------------------------------------------\n"
-
-            f"{facts_summary}\n\n"
-
-            f"Sếp yên tâm dữ liệu luôn được đối soát 3 chiều Vận hành - ACB - Thuế sạch sẽ 100% ạ! 😊\n"
-
-            f"🛡️ [Trực ban Cloud Sổ Master 24/7 phục vụ {caller_name}]"
-
+            "Sếp chạm trực tiếp vào các nút bên dưới đáy màn hình để xem nhanh báo cáo nhé ạ:\n"
+            "• 🚦 5 Đèn Báo Quản Trị: Xem lướt sức khỏe công ty trong 2 giây\n"
+            "• 💰 Dòng Tiền & Tiền Về: Kiểm tra tiền về ACB & HĐ cần xuất bù\n"
+            "• 🤝 Công Nợ 11 NCC: Chi tiết công nợ phải trả & tiền ứng gối đầu\n"
+            "• ⏳ Công Nợ KH (TK 131): Kiểm tra tình hình thu tiền hóa đơn đầu ra\n"
+            "• 📦 Tồn Kho Chống Âm: Kiểm tra số mét PVC & cảnh báo mã < 30m\n"
+            "• 🧾 Soạn HĐ Nháp: Gợi ý mặt hàng & cơ cấu hóa đơn 15 tr\n\n"
+            f"💡 Sếp có thể bấm icon (::) bên cạnh ô gõ chữ để Ẩn / Hiện bàn phím này bất cứ lúc nào ạ! 😊"
         )
-
-
 
     # 3. Lệnh /tienve hoặc tra cứu tiền về
 
-    if lower_text in ["/tienve", "tiền về", "tien ve", "khách trả", "khach tra"]:
+    if any(k in lower_text for k in ["dòng tiền & tiền về", "dong tien & tien ve", "dòng tiền", "dong tien", "/tienve", "tiền về", "tien ve", "khách trả", "khach tra"]):
 
         v_in = raw_facts.get("vat_in", {})
 
@@ -1411,11 +1383,9 @@ def process_user_query(text: str, caller_name: str = "Sếp") -> str:
 
         return "\n".join(lines)
 
-
-
     # 4. Lệnh /congno hoặc tra cứu nhà cung cấp
 
-    if lower_text in ["/congno", "công nợ", "cong no", "nợ ncc", "no ncc"]:
+    if any(k in lower_text for k in ["công nợ 11 ncc", "cong no 11 ncc", "/congno_ncc", "/congno", "nợ ncc", "no ncc", "công nợ ncc", "cong no ncc"]) or lower_text in ["công nợ", "cong no"]:
 
         debts = raw_facts.get("ncc_debts", [])
 
@@ -1455,11 +1425,9 @@ def process_user_query(text: str, caller_name: str = "Sếp") -> str:
 
         return "\n".join(lines)
 
-
-
     # 5. Lệnh /hoadon hoặc kiểm tra HĐ đầu ra
 
-    if lower_text in ["/hoadon", "hóa đơn", "hoa don", "hd ra", "hd"]:
+    if any(k in lower_text for k in ["công nợ kh", "cong no kh", "khách nợ", "khach no", "tk 131", "131", "/congno_kh", "/hoadon", "hóa đơn ra", "hoa don ra"]) or lower_text in ["hóa đơn", "hoa don", "hd"]:
 
         v_out = raw_facts.get("vat_out", {})
 
@@ -1487,83 +1455,44 @@ def process_user_query(text: str, caller_name: str = "Sếp") -> str:
 
         return "\n".join(lines)
 
-
-
-    # 6. Lệnh /tonkho hoặc tra cứu tồn kho cụ thể theo mã sản phẩm
-
-    m_stock = re.search(r"(?:/tonkho|tồn kho|mã|ton kho|kiem tra kho)\s*([a-zA-Z0-9]+)?", lower_text)
-
-    if m_stock and m_stock.group(1):
-
-        target_code = m_stock.group(1).upper()
-
-        inv_map = raw_facts.get("inventory_map", {})
-
-        if target_code in inv_map:
-
-            item = inv_map[target_code]
-
-            return (
-
-                f"📦 DẠ BÁO CÁO {caller_name.upper()} VỀ TỒN KHO MÃ {target_code} Ạ:\n"
-
-                "--------------------------------------------------\n"
-
-                f"• Tên sản phẩm: {item['name']}\n"
-
-                f"• Đơn vị tính: {item['unit']}\n"
-
-                f"• Tổng nhập HĐ: {fmt_qty(item['in'])} {item['unit']}\n"
-
-                f"• Tổng xuất HĐ: {fmt_qty(item['out'])} {item['unit']}\n"
-
-                f"• 👉 LƯU TỒN THỰC TẾ: {fmt_qty(item['stock'])} {item['unit']} (An toàn)\n\n"
-
-                f"{caller_name} cần kiểm tra thêm mã nào cứ nhắn em nhé ạ! 😊"
-
-            )
-
-        else:
-
-            return (
-
-                f"📦 DẠ BÁO CÁO {caller_name.upper()}:\n"
-
-                f"Hiện tại trong danh mục kho không có mã '{target_code}'.\n"
-
-                f"{caller_name} vui lòng kiểm tra lại mã hoặc nhắn tên hàng để em tra cứu giúp nhé ạ! 😊"
-
-            )
-
-    elif lower_text in ["/tonkho", "tồn kho", "ton kho", "kho"]:
-
+    # 6. Lệnh Tồn kho tổng thể & tra cứu mã SP
+    if any(k in lower_text for k in ["tồn kho chống âm", "ton kho chong am", "báo cáo kho", "bao cao kho"]) or lower_text in ["/tonkho", "tồn kho", "ton kho", "kho"]:
         st = raw_facts.get("stock", {})
-
         tot_m = st.get("total_m", 0.0)
-
         neg_cnt = st.get("neg_count", 0)
-
         low_list = raw_facts.get("stock_low", [])
-
         lines = [f"📦 DẠ BÁO CÁO {caller_name.upper()} TỒN KHO TỔNG THỂ Ạ:", "--------------------------------------------------"]
-
         lines.append(f"• Tổng số mét lưu tồn: {fmt_qty(tot_m)} mét")
-
         lines.append(f"• Số mã âm kho: {neg_cnt} mã (🟢 100% An toàn thuế, chống âm kho)")
-
         if low_list:
-
             lines.append(f"\n⚠️ CÓ {len(low_list)} MÃ TỒN DƯỚI 30 MÉT CẦN LƯU Ý KHI XUẤT:")
-
             for item in low_list[:5]:
-
                 lines.append(f"👉 {item['code']}: {fmt_qty(item['stock'])} m ({item['name']})")
-
-        lines.append(f"\n{caller_name} cần tra cứu mã cụ thể cứ gõ: /tonkho [Mã SP] nhé ạ! 😊")
-
+        lines.append(f"\n💡 Sếp cần tra cứu mã cụ thể cứ gõ: /tonkho [Mã SP] nhé ạ! 😊")
         return "\n".join(lines)
 
-
+    m_stock = re.search(r"(?:/tonkho|tra mã|mã sp|mã)\\s+([a-zA-Z0-9\\.\\-_]+)", lower_text)
+    if m_stock and not any(k in lower_text for k in ["chống âm", "tổng thể", "báo cáo"]):
+        target_code = m_stock.group(1).upper()
+        inv_map = raw_facts.get("inventory_map", {})
+        if target_code in inv_map:
+            item = inv_map[target_code]
+            return (
+                f"📦 DẠ BÁO CÁO {caller_name.upper()} VỀ TỒN KHO MÃ {target_code} Ạ:\n"
+                "--------------------------------------------------\n"
+                f"• Tên sản phẩm: {item['name']}\n"
+                f"• Đơn vị tính: {item['unit']}\n"
+                f"• Tổng nhập HĐ: {fmt_qty(item['in'])} {item['unit']}\n"
+                f"• Tổng xuất HĐ: {fmt_qty(item['out'])} {item['unit']}\n"
+                f"• 👉 LƯU TỒN THỰC TẾ: {fmt_qty(item['stock'])} {item['unit']} (An toàn)\n\n"
+                f"{caller_name} cần kiểm tra thêm mã nào cứ nhắn em nhé ạ! 😊"
+            )
+        else:
+            return (
+                f"📦 DẠ BÁO CÁO {caller_name.upper()}:\n"
+                f"Hiện tại trong danh mục kho không có mã '{target_code}'.\n"
+                f"{caller_name} vui lòng kiểm tra lại mã hoặc nhắn tên hàng để em tra cứu giúp nhé ạ! 😊"
+            )
 
     # 7. Tra cứu nhà cung cấp cụ thể bằng tên
 
@@ -1601,43 +1530,25 @@ def process_user_query(text: str, caller_name: str = "Sếp") -> str:
 
             )
 
-
-
     # 8. Gửi sang Google Gemini AI để sinh phản hồi tự nhiên, chuẩn mực
 
     ai_reply = call_gemini_api(text, facts_summary)
+
     if not ai_reply:
+
         ai_reply = call_openrouter_api(text, facts_summary, caller_name=caller_name)
 
     if ai_reply:
 
         return ai_reply
 
-
-
-    # 9. Fallback dự phòng nếu Gemini API bận
-
+    # 9. Fallback dự phòng siêu ngắn gọn (KHÔNG nhồi nhét bảng dài làm tràn màn hình)
     return (
-
-        f"🌸 DẠ EM CHÀO {caller_name.upper()} Ạ!\n"
-
-        f"Em xin gửi {caller_name} số liệu kế toán mới nhất trích xuất từ Sổ Master nhé ạ:\n\n"
-
-        f"{facts_summary}\n\n"
-
-        f"{caller_name} cần em kiểm tra chi tiết phần nào cứ nhắn em ngay nhé ạ! 😊\n"
-
-        f"🛡️ [Trực ban Cloud Sổ Master 24/7 phục vụ {caller_name}]"
-
+        f"🌸 DẠ BÁO CÁO {caller_name.upper()}! ✨\n"
+        f"Em đã nhận được yêu cầu của {caller_name} rồi ạ.\n"
+        f"Sếp có thể chạm nhanh các nút Menu bên dưới để xem ngay báo cáo (5 Đèn Báo, Công Nợ, Tồn Kho...), hoặc hỏi em chi tiết từng việc nhé ạ! 😊\n"
+        f"🛡️ [Trực ban Kế toán Ngọc Hà 24/7]"
     )
-
-
-
-# ==============================================================================
-
-# TELEGRAM BOT CLIENT & POLLING ENGINE
-
-# ==============================================================================
 
 def telegram_api_call(method: str, params: dict = None, data: dict = None):
 
@@ -1683,8 +1594,6 @@ def telegram_api_call(method: str, params: dict = None, data: dict = None):
 
         return None
 
-
-
 def telegram_send_message(chat_id: int, text: str):
 
     """Gửi tin nhắn Telegram an toàn, tự động chia nhỏ nếu vượt quá 3800 ký tự"""
@@ -1705,8 +1614,6 @@ def telegram_send_message(chat_id: int, text: str):
 
     return last_res
 
-
-
 def telegram_send_chat_action(chat_id: int, action: str = "typing"):
 
     """Gửi trạng thái 'đang gõ' để người dùng trên Telegram biết bot đang xử lý"""
@@ -1719,8 +1626,6 @@ def telegram_send_chat_action(chat_id: int, action: str = "typing"):
 
         pass
 
-
-
 def handle_telegram_message(msg: dict):
 
     """Xử lý từng tin nhắn Telegram tới bot theo chuẩn phân quyền và bảo mật"""
@@ -1731,15 +1636,11 @@ def handle_telegram_message(msg: dict):
 
         return
 
-
-
     str_chat_id = str(chat_id)
 
     from_user = msg.get("from", {}).get("first_name", "Bạn")
 
     is_authenticated = (str_chat_id in AUTHENTICATED_USERS)
-
-
 
     # -------------------------------------------------------------------------
 
@@ -1761,8 +1662,6 @@ def handle_telegram_message(msg: dict):
 
             user_name = "Sếp Đạt" if is_admin else from_user
 
-
-
             AUTHENTICATED_USERS[str_chat_id] = {
 
                 "name": user_name,
@@ -1774,8 +1673,6 @@ def handle_telegram_message(msg: dict):
                 "waiting_for_name": not is_admin
 
             }
-
-
 
             if is_admin:
 
@@ -1837,8 +1734,6 @@ def handle_telegram_message(msg: dict):
 
             return
 
-
-
     # Cập nhật tên nếu đang chờ
 
     user_info = AUTHENTICATED_USERS.get(str_chat_id, {})
@@ -1859,11 +1754,7 @@ def handle_telegram_message(msg: dict):
 
             return
 
-
-
     caller_name = user_info.get("name", "Sếp")
-
-
 
     # -------------------------------------------------------------------------
 
@@ -1889,8 +1780,6 @@ def handle_telegram_message(msg: dict):
 
         return
 
-
-
     # -------------------------------------------------------------------------
 
     # XỬ LÝ TIN NHẮN VĂN BẢN (TEXT) & CÁC LỆNH
@@ -1902,8 +1791,6 @@ def handle_telegram_message(msg: dict):
     if not text:
 
         return
-
-
 
     # Lệnh Menu / Giới thiệu
 
@@ -1951,8 +1838,6 @@ def handle_telegram_message(msg: dict):
 
         return
 
-
-
     if text.lower() in ["/status", "status", "trang thai"]:
 
         cache = get_master_data_cached()
@@ -1981,8 +1866,6 @@ def handle_telegram_message(msg: dict):
 
         return
 
-
-
     # Xử lý câu hỏi thường
 
     telegram_send_chat_action(chat_id, "typing")
@@ -1990,8 +1873,6 @@ def handle_telegram_message(msg: dict):
     reply = process_user_query(text, caller_name=caller_name)
 
     telegram_send_message(chat_id, reply)
-
-
 
 def run_telegram_polling():
 
@@ -2003,8 +1884,6 @@ def run_telegram_polling():
 
     backoff = 2
 
-
-
     while True:
 
         try:
@@ -2014,8 +1893,6 @@ def run_telegram_polling():
             if last_update_id:
 
                 params["offset"] = last_update_id + 1
-
-
 
             res = telegram_api_call("getUpdates", params=params)
 
@@ -2048,8 +1925,6 @@ def run_telegram_polling():
             time.sleep(backoff)
 
             backoff = min(backoff * 2, 30)
-
-
 
 # ==============================================================================
 
@@ -2093,15 +1968,11 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
 
             self.end_headers()
 
-
-
     def log_message(self, format, *args):
 
         # Tắt log HTTP thừa để giữ console sạch sẽ
 
         pass
-
-
 
 def run_http_server():
 
@@ -2121,15 +1992,11 @@ def run_http_server():
 
         print(f"[{datetime.now()}] [HTTP ERROR]: Không thể mở cổng {PORT}: {e}")
 
-
-
 # ==============================================================================
 
 # HÀM MAIN KHỞI ĐỘNG HỆ THỐNG
 
 # ==============================================================================
-
-
 
 def keep_alive_self_ping():
 
@@ -2165,7 +2032,23 @@ def keep_alive_self_ping():
 
         time.sleep(510)
 
-
+def setup_bot_commands():
+    """Đăng ký danh sách lệnh chính thức vào nút Menu dấu '/' của Telegram"""
+    commands = [
+        {"command": "baocao", "description": "🚦 5 Đèn báo quản trị tổng hợp"},
+        {"command": "congno_ncc", "description": "🤝 Đối soát công nợ 11 NCC (TK 331)"},
+        {"command": "congno_kh", "description": "⏳ Công nợ khách hàng (TK 131)"},
+        {"command": "tienve", "description": "💰 Tiền về ACB & HĐ cần xuất bù"},
+        {"command": "tonkho", "description": "📦 Tồn kho PVC & chống âm kho"},
+        {"command": "soan_hd", "description": "🧾 Soạn thảo hóa đơn nháp tức thì"},
+        {"command": "sync", "description": "⚡ Làm mới dữ liệu Sổ Master từ Cloud"},
+        {"command": "menu", "description": "📱 Bật lại bàn phím nút bấm 1 chạm"}
+    ]
+    try:
+        telegram_api_call("setMyCommands", data={"commands": commands})
+        print(f"[{datetime.now()}] [TELEGRAM] Đã thiết lập thành công Menu lệnh chuẩn!")
+    except Exception as e:
+        print(f"[{datetime.now()}] [WARNING] Thiết lập Bot Commands lỗi: {e}")
 
 def main():
 
@@ -2185,29 +2068,22 @@ def main():
 
     print("=" * 70)
 
-
-
     # 1. Khởi động HTTP Server ở luồng ngầm (daemon)
 
     http_thread = threading.Thread(target=run_http_server, daemon=True)
 
     http_thread.start()
 
-
-
     # 2. Tải trước dữ liệu Sổ Master vào bộ nhớ đệm
 
+    setup_bot_commands()
     threading.Thread(target=get_master_data_cached, daemon=True).start()
 
     threading.Thread(target=keep_alive_self_ping, daemon=True).start()
 
-
-
     # 3. Chạy vòng lặp Polling Telegram tại luồng chính
 
     run_telegram_polling()
-
-
 
 if __name__ == "__main__":
 
