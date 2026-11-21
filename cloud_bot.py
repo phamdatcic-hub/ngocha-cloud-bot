@@ -558,7 +558,7 @@ def call_gemini_api(prompt_text: str, context_facts: str) -> str:
     full_prompt = f"{system_instruction}\n\nYÊU CẦU CỦA GIÁM ĐỐC:\n{prompt_text}"
 
     # Danh sách các model ổn định để tự động thử
-    models_to_try = ["gemini-flash-latest", "gemini-3.5-flash", "gemini-3.8-flash", "gemini-2.5-flash-lite"]
+    models_to_try = ["gemini-flash-latest", "gemini-3.8-flash", "gemini-3.5-flash"]
 
     payload = {
         "contents": [{"parts": [{"text": full_prompt}]}],
@@ -574,7 +574,7 @@ def call_gemini_api(prompt_text: str, context_facts: str) -> str:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
         try:
             req = urllib.request.Request(url, data=data_bytes, headers=headers)
-            with urllib.request.urlopen(req, timeout=12) as resp:
+            with urllib.request.urlopen(req, timeout=8) as resp:
                 res_json = json.loads(resp.read().decode("utf-8"))
                 candidates = res_json.get("candidates", [])
                 if candidates:
@@ -606,6 +606,44 @@ def process_user_query(text: str, caller_name: str = "Sếp") -> str:
     facts_summary = cache.get("summary_text", "")
     raw_facts = cache.get("raw_facts", {})
     lower_text = text.lower().strip()
+
+    # 0. Xu ly cau chao hoi ngan hoac goi bot (alo, oi, em oi, chao)
+    if lower_text in ["alo", "a lô", "ơi", "em ơi", "em oi", "hi", "hello", "chào em", "chao em"]:
+        return (
+            f"🌸 DẠ EM CHÀO {caller_name.upper()} Ạ! ✨\n"
+            f"Em là Trợ lý Kế toán Trưởng luôn túc trực 24/7 phục vụ {caller_name} đây ạ!\n\n"
+            f"{caller_name} cần em kiểm tra công nợ, tiền về, tồn kho hay soạn hóa đơn cứ nhắn em ngay nhé ạ! 😊\n"
+            f"🛡️ [Trực ban Cloud Sổ Master 24/7 phục vụ {caller_name}]"
+        )
+
+    # 0.1 Nhan dien nghiep vu Soan hoa don nhap / Xuat hoa don tuc thi
+    if any(k in lower_text for k in ["soạn hoá đơn", "soạn hóa đơn", "soan hoa don", "hóa đơn nháp", "hoa don nhap", "xuất hoá đơn", "xuất hóa đơn", "xuat hoa don"]):
+        v_in = raw_facts.get("vat_in", {})
+        missing = v_in.get("missing_vat", [])
+        if missing:
+            lines = [
+                f"🧾 DẠ BÁO CÁO {caller_name.upper()}! EM GỬI THÔNG TIN SOẠN HÓA ĐƠN NHÁP Ạ:",
+                "--------------------------------------------------"
+            ]
+            for m in missing:
+                cust_name = m.get('cust', '')
+                amt = m.get('amt', 0)
+                date_str = m.get('date', '')
+                pre_tax = round(amt / 1.08)
+                vat_amt = amt - pre_tax
+                lines.append(f"👉 KHÁCH HÀNG: {cust_name}")
+                lines.append(f"• Số tiền đã về ACB: {fmt_money(amt)} (Ngày {date_str})")
+                lines.append(f"• Doanh thu chưa thuế (TK 511): {fmt_money(pre_tax)}")
+                lines.append(f"• Tiền thuế VAT 8% (TK 3331): {fmt_money(vat_amt)}")
+                lines.append(f"• Tổng thanh toán có VAT: {fmt_money(amt)} (Khớp tròn 100% tiền ACB)\n")
+            lines.append("📦 CÁC MẶT HÀNG TỒN KHO AN TOÀN ĐỀ XUẤT XUẤT:")
+            lines.append("• Tấm BT 550 x 18 (Mã BT5518, tồn 450m, đơn giá: 145.800 đ)")
+            lines.append("• Tấm BT 500 x 18 (Mã BT5018, tồn 438m, đơn giá: 134.000 đ)")
+            lines.append("• Tấm BT 450 x 18 (Mã BT4518, tồn 545m, đơn giá: 124.300 đ)")
+            lines.append("• Tấm BT 400 x 18 (Mã BT4018, tồn 689m, đơn giá: 107.600 đ)")
+            lines.append("• Nẹp cạnh BT18 (Mã Nep Bento, đơn giá: 5.100 đ)\n")
+            lines.append(f"{caller_name} mở Sheet '01 Soan Thao HD Thu' trên máy tính để chốt số lượng hoặc nhắn em các mã hàng để em tính toán ngay nhé ạ! 😊")
+            return "\n".join(lines)
 
     # 1. Lệnh /sync hoặc đồng bộ
     if lower_text in ["/sync", "đồng bộ", "dong bo", "reload"]:
@@ -1000,6 +1038,25 @@ def run_http_server():
 # ==============================================================================
 # HÀM MAIN KHỞI ĐỘNG HỆ THỐNG
 # ==============================================================================
+
+def keep_alive_self_ping():
+    """
+    Tu dong gui HTTP GET request dinh ky 8.5 phut (510s) vao URL Render
+    de reset bo dem 15 phut inactivity cua Render Free Tier,
+    giu cho Cloud Bot hoat dong 24/7 khong bao gio bi ngu dong.
+    """
+    url = "https://ngocha-cloud-bot.onrender.com/health"
+    print(f"[{datetime.now()}] [KEEP-ALIVE] Luong chong ngu Render da khoi dong (chu ky 8.5 phut)...")
+    time.sleep(30)
+    while True:
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Render-KeepAlive/2.0"})
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                print(f"[{datetime.now()}] [KEEP-ALIVE] Ping Render thanh cong: HTTP {resp.status}")
+        except Exception as e:
+            print(f"[{datetime.now()}] [KEEP-ALIVE] Ping ngoai le: {e}")
+        time.sleep(510)
+
 def main():
     print("=" * 70)
     print("   CLOUD TELEGRAM BOT 24/7 - CONG TY KIEN TRUC NGOC HA")
@@ -1016,6 +1073,7 @@ def main():
 
     # 2. Tải trước dữ liệu Sổ Master vào bộ nhớ đệm
     threading.Thread(target=get_master_data_cached, daemon=True).start()
+    threading.Thread(target=keep_alive_self_ping, daemon=True).start()
 
     # 3. Chạy vòng lặp Polling Telegram tại luồng chính
     run_telegram_polling()
