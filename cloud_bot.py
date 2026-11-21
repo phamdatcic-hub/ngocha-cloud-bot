@@ -296,6 +296,78 @@ AUTHENTICATED_USERS = {
 
 
 
+
+# ==============================================================================
+# SMART GATEWAY CONFIGURATION (ANTIGRAVITY PC FIRST - CLAUDE SONNET 4.6 DESIGN)
+# ==============================================================================
+PC_NGROK_URL = os.environ.get("PC_NGROK_URL", "https://overplant-green-dollop.ngrok-free.dev").strip()
+PC_STATUS_ENDPOINT = f"{PC_NGROK_URL}/api/status"
+PC_CHAT_ENDPOINT = f"{PC_NGROK_URL}/api/chat"
+PC_PIN_HEADERS = {
+    "x-ngoc-ha-pin": "1408",
+    "ngrok-skip-browser-warning": "true",
+    "User-Agent": "NgocHa-Cloud-Gateway/2.0"
+}
+
+def check_pc_online() -> bool:
+    """
+    Kiểm tra Antigravity PC có đang online không qua Ngrok.
+    GET /api/status với PIN header '1408', timeout 3s.
+    """
+    if not PC_NGROK_URL:
+        return False
+    try:
+        if requests is not None:
+            resp = requests.get(PC_STATUS_ENDPOINT, headers=PC_PIN_HEADERS, timeout=3)
+            return (resp.status_code == 200)
+        else:
+            req = urllib.request.Request(PC_STATUS_ENDPOINT, headers=PC_PIN_HEADERS)
+            with urllib.request.urlopen(req, timeout=3) as resp:
+                return (resp.status == 200)
+    except Exception as e:
+        print(f"[{datetime.now()}] [GATEWAY] PC Offline check: {e}")
+        return False
+
+def forward_to_pc_antigravity(prompt_text: str, chat_id: int = None, caller_name: str = "Sếp Đạt") -> str:
+    """
+    Chuyển tiếp câu hỏi tới Bộ Não Kế toán Trưởng Antigravity PC qua Ngrok.
+    POST /api/chat với PIN header '1408' và body {"message": prompt_text}.
+    Timeout 45s.
+    """
+    ANTIGRAVITY_FOOTER = "\n\n🧠 *[Bộ Não Kế toán Trưởng Antigravity PC trực tiếp đối soát]*"
+    payload = {"message": prompt_text}
+    headers = {**PC_PIN_HEADERS, "Content-Type": "application/json"}
+    try:
+        print(f"[{datetime.now()}] [GATEWAY] Đang chuyển tiếp tới Antigravity PC: {prompt_text[:60]}...")
+        if requests is not None:
+            resp = requests.post(PC_CHAT_ENDPOINT, headers=headers, json=payload, timeout=75)
+            if resp.status_code == 200:
+                data = resp.json()
+                answer = (data.get("response") or data.get("reply") or "").strip()
+                if answer and not any(err in answer for err in ["rpc error: code = Unavailable", "connection error"]):
+                    print(f"[{datetime.now()}] [GATEWAY] Antigravity PC phản hồi thành công ({len(answer)} ký tự).")
+                    return f"{answer}{ANTIGRAVITY_FOOTER}"
+                else:
+                    print(f"[{datetime.now()}] [GATEWAY] Phản hồi từ PC có lỗi hoặc rỗng -> Chuyển Fallback.")
+                    return None
+            else:
+                print(f"[{datetime.now()}] [GATEWAY] PC trả về HTTP {resp.status_code} -> Chuyển Fallback.")
+                return None
+        else:
+            data_bytes = json.dumps(payload).encode("utf-8")
+            req = urllib.request.Request(PC_CHAT_ENDPOINT, data=data_bytes, headers=headers)
+            with urllib.request.urlopen(req, timeout=75) as resp:
+                if resp.status == 200:
+                    data = json.loads(resp.read().decode("utf-8"))
+                    answer = (data.get("response") or data.get("reply") or "").strip()
+                    if answer and not any(err in answer for err in ["rpc error: code = Unavailable", "connection error"]):
+                        return f"{answer}{ANTIGRAVITY_FOOTER}"
+                    return None
+                return None
+    except Exception as e:
+        print(f"[{datetime.now()}] [GATEWAY] Lỗi chuyển tiếp tới PC: {e} -> Chuyển Fallback.")
+        return None
+
 def fmt_money(val) -> str:
 
 
@@ -2416,7 +2488,7 @@ def call_openrouter_api(prompt_text: str, context_facts: str, caller_name: str =
 
 
 
-def process_user_query(text: str, caller_name: str = "Sếp") -> str:
+def process_user_query(text: str, chat_id: int = None, caller_name: str = "Sếp") -> str:
 
 
 
@@ -2474,22 +2546,17 @@ def process_user_query(text: str, caller_name: str = "Sếp") -> str:
             "👉 Sếp chạm nhanh 6 nút [Menu Tra Soát Nhanh] bên dưới (5 Đèn Báo, Dòng Tiền, Công Nợ NCC, Công Nợ KH, Tồn Kho, Soạn HĐ) hoặc nhắn trực tiếp nội dung để em kiểm tra ngay nhé ạ! 😊"
         )
 
-    # 0.0 Nhan dien lenh Chuyen ban nhap / VietInvoice / Ky so
-    if any(k in lower_text for k in ["vietinvoice", "hóa đơn 157", "hd 157", "vũ văn sỹ", "vu van sy", "bản nháp", "ban nhap", "ký số", "ky so"]):
-        return (
-            f"🧾 DẠ BÁO CÁO {caller_name.upper()} TÌNH HÌNH HÓA ĐƠN VIETINVOICE Ạ! ✨\n"
-            "--------------------------------------------------\n"
-            "🟢 HÓA ĐƠN SỐ 00000157 ĐÃ PHÁT HÀNH THÀNH CÔNG 100%:\n"
-            "• Khách hàng: HỘ KINH DOANH VŨ VĂN SỸ TN (MST: 036097004787)\n"
-            "• Số hóa đơn: 00000157 | Ký hiệu: 1C26TNH (Mã hệ thống: 18422361)\n"
-            "• Mã Cơ quan Thuế cấp: 00E7FB6856E51343EE9719486404130D3D\n"
-            "• Thời điểm ký số & phát hành: 21/11/2026 15:11:20\n"
-            "• Tổng giá trị có VAT 8%: 15.000.012 đ (Khớp tròn 100% tiền ACB 2797)\n"
-            "• Cơ cấu mặt hàng: 10m BT5518, 43m BT5018, 50m BT4518, 89m Nẹp Bento\n"
-            "• Trạng thái Sổ Master: Đã gạch nợ thành công 100%, không còn khoản nào nợ HĐ!\n\n"
-            f"🛡️ [Trực ban Cloud Sổ Master 24/7 phục vụ {caller_name}]"
-        )
+    # =========================================================================
+    # ƯU TIÊN SỐ 1 TUYỆT ĐỐI (CLAUDE SONNET 4.6): CHUYỂN TIẾP VỀ ANTIGRAVITY PC
+    # =========================================================================
+    if check_pc_online():
+        pc_reply = forward_to_pc_antigravity(text, chat_id=chat_id, caller_name=caller_name)
+        if pc_reply:
+            return pc_reply
+    # =========================================================================
 
+
+    # 0.0 Nhan dien lenh Chuyen ban nhap / VietInvoice / Ky so
     # 0.1 Nhan dien nghiep vu Soan hoa don nhap / Xuat hoa don tuc thi
 
 
@@ -3025,7 +3092,7 @@ def process_user_query(text: str, caller_name: str = "Sếp") -> str:
 
 
 
-        return ai_reply
+        return f"{ai_reply}\n\n☁️ *[Trực ban Gemini Cloud 24/7 - PC Offline]*"
 
 
 
@@ -3567,7 +3634,7 @@ def handle_telegram_message(msg: dict):
 
 
 
-    reply = process_user_query(text, caller_name=caller_name)
+    reply = process_user_query(text, chat_id=chat_id, caller_name=caller_name)
 
 
 
