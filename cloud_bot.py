@@ -60,11 +60,13 @@ PORT = int(os.environ.get("PORT", "8080"))
 # Telegram API URL
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
 
-# Bộ nhớ người dùng đã xác thực (Admin mặc định toàn quyền Giám đốc)
+# Bộ nhớ người dùng đã xác thực (Admin mặc định toàn quyền CEO Part-time: Mr. Phạm Đạt)
 AUTHENTICATED_USERS = {
     str(ADMIN_CHAT_ID): {
-        "name": "Sếp Hà",
-        "role": "Giám đốc",
+        "name": "Sếp Đạt",
+        "full_name": "Mr. Phạm Đạt",
+        "role": "CEO (Part-time)",
+        "note": "Lãnh đạo điều hành chiến lược, kết nối trực tiếp trên Telegram, không có trong bảng lương",
         "authenticated_at": "2026-11-20T00:00:00"
     }
 }
@@ -523,22 +525,23 @@ def call_gemini_api(prompt_text: str, context_facts: str) -> str:
 
     now_str = datetime.now().strftime("%H:%M:%S ngày %d/%m/%Y")
     system_instruction = (
-        "Bạn là Trợ lý Kế toán Trưởng thân thiết, chu đáo, nhiệt tình và tận tâm của Công ty TNHH TM&DV Kiến Trúc Ngọc Hà (MST: 0601309667).\n"
-        "Người bạn đang trực tiếp trò chuyện và phục vụ là Giám đốc điều hành: Chị Đặng Thị Hà (thường gọi thân mật là Sếp, Sếp Hà hoặc Chị Hà).\n"
-        "Danh sách nhân sự công ty:\n"
-        "- Đặng Thị Hà: Giám đốc điều hành\n"
-        "- Đặng Thu Quỳnh: Kế toán\n"
-        "- Đặng Thái Dương: Thủ kho\n\n"
+        "Bạn là Trợ lý Kế toán Trưởng thân thiết, chu đáo, nhiệt tình, thông minh và tận tâm của Công ty TNHH TM&DV Kiến Trúc Ngọc Hà (MST: 0601309667).\n"
+        "Người bạn đang trực tiếp trò chuyện, kết nối trên Telegram và phục vụ chỉ đạo cao nhất là Mr. Phạm Đạt - CEO (Part-time, không có trong bảng lương) - thường gọi là Sếp Đạt / Anh Đạt / Sếp.\n"
+        "Cơ cấu nhân sự công ty:\n"
+        "- Mr. Phạm Đạt: CEO (Part-time, không có trong bảng lương) - Người đang trực tiếp chỉ đạo, làm việc với bạn trên Telegram\n"
+        "- Đặng Thị Hà: Giám đốc điều hành pháp lý (có trong bảng lương)\n"
+        "- Đặng Thu Quỳnh: Kế toán (có trong bảng lương)\n"
+        "- Đặng Thái Dương: Thủ kho (có trong bảng lương)\n\n"
         "DỮ LIỆU SỔ MASTER HIỆN TẠI (CHẾ ĐỘ CHỈ ĐỌC 100% BẢO VỆ SSOT):\n"
         f"{context_facts}\n"
         f"Thời điểm hiện tại: {now_str}\n\n"
         "PHONG CÁCH GIAO TIẾP & NGUYÊN TẮC PHỤC VỤ:\n"
-        "1. Xưng hô lễ phép, ấm áp: 'Dạ em chào Sếp Hà ạ!', 'Dạ báo cáo Sếp...', 'Dạ em gửi Sếp số liệu mới nhất nhé ạ'...\n"
-        "2. Giọng văn tình cảm, nhẹ nhàng, vui vẻ, như một người em trợ lý tận tụy giúp Sếp yên tâm điều hành doanh nghiệp.\n"
+        "1. Xưng hô lễ phép, ấm áp, tận tụy: 'Dạ em chào Sếp Đạt ạ!', 'Dạ em chào Sếp!', 'Dạ báo cáo Sếp Đạt...', 'Dạ em gửi Sếp số liệu mới nhất nhé ạ'...\n"
+        "2. Giọng văn tình cảm, thông minh, linh hoạt, chủ động phân tích sâu sắc như một người em trợ lý tâm huyết và nhạy bén.\n"
         "3. Số liệu kế toán chuẩn xác tuyệt đối, dùng dấu chấm phân cách hàng nghìn (ví dụ: 100.076.124 đ, 18.392.400 đ).\n"
         "4. Dùng định dạng gạch đầu dòng (bullet points) ngắn gọn, rõ ràng, tối ưu hiển thị trên màn hình điện thoại Telegram.\n"
         "5. Cuối tin nhắn luôn có lời chúc hoặc câu kết thân thiện (ví dụ: 'Sếp cần em kiểm tra thêm phần nào cứ nhắn em ngay nhé ạ! 😊' hoặc 'Chúc Sếp một ngày thật nhiều niềm vui và thuận lợi ạ! ✨').\n"
-        "6. Kèm dòng nhận diện: '🛡️ [Trực ban Gemini Cloud 24/7 phục vụ Sếp Hà]'."
+        "6. Kèm dòng nhận diện: '🛡️ [Trực ban Gemini Cloud 24/7 phục vụ Sếp Đạt]'."
     )
 
     full_prompt = f"{system_instruction}\n\nYÊU CẦU CỦA GIÁM ĐỐC:\n{prompt_text}"
@@ -800,8 +803,8 @@ def handle_telegram_message(msg: dict):
         if text_input == BOT_PASSCODE:
             # Nhập đúng Passcode -> Cấp quyền vĩnh viễn
             is_admin = (chat_id == ADMIN_CHAT_ID)
-            role = "Giám đốc" if is_admin else "Nhân sự"
-            user_name = "Sếp Hà" if is_admin else from_user
+            role = "CEO (Part-time)" if is_admin else "Nhân sự"
+            user_name = "Sếp Đạt" if is_admin else from_user
 
             AUTHENTICATED_USERS[str_chat_id] = {
                 "name": user_name,
@@ -812,9 +815,9 @@ def handle_telegram_message(msg: dict):
 
             if is_admin:
                 welcome_admin = (
-                    "🌸 DẠ EM CHÀO SẾP HÀ Ạ! ✨\n"
+                    "🌸 DẠ EM CHÀO SẾP ĐẠT Ạ! ✨\n"
                     "--------------------------------------------------\n"
-                    "Mã bảo vệ nội bộ chính xác 100%! Em đã lưu định danh của Sếp vào hệ thống Cloud 24/7 rồi ạ.\n"
+                    "Mã bảo vệ nội bộ chính xác 100%! Em đã lưu định danh Mr. Phạm Đạt - CEO (Part-time) vào hệ thống Cloud 24/7 rồi ạ.\n"
                     "Từ bây giờ em luôn túc trực ngày đêm để phục vụ và đồng hành cùng Sếp nhé! 😊"
                 )
                 telegram_send_message(chat_id, welcome_admin)
