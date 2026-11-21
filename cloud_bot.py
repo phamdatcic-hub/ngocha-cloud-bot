@@ -1048,21 +1048,7 @@ def call_gemini_api(prompt_text: str, context_facts: str) -> str:
 
         f"Thời điểm hiện tại: {now_str}\n\n"
 
-        "PHONG CÁCH GIAO TIẾP & NGUYÊN TẮC PHỤC VỤ:\n"
-
-        "1. Xưng hô lễ phép, ấm áp, tận tụy: 'Dạ em chào Sếp Đạt ạ!', 'Dạ em chào Sếp!', 'Dạ báo cáo Sếp Đạt...', 'Dạ em gửi Sếp số liệu mới nhất nhé ạ'...\n"
-
-        "2. Giọng văn tình cảm, thông minh, linh hoạt, chủ động phân tích sâu sắc như một người em trợ lý tâm huyết và nhạy bén.\n"
-
-        "3. Số liệu kế toán chuẩn xác tuyệt đối, dùng dấu chấm phân cách hàng nghìn (ví dụ: 100.076.124 đ, 18.392.400 đ).\n"
-
-        "4. Dùng định dạng gạch đầu dòng (bullet points) ngắn gọn, rõ ràng, tối ưu hiển thị trên màn hình điện thoại Telegram.\n"
-
-        "5. Cuối tin nhắn luôn có lời chúc hoặc câu kết thân thiện (ví dụ: 'Sếp cần em kiểm tra thêm phần nào cứ nhắn em ngay nhé ạ! 😊' hoặc 'Chúc Sếp một ngày thật nhiều niềm vui và thuận lợi ạ! ✨').\n"
-
-        "6. Kèm dòng nhận diện: '🛡️ [Trực ban Gemini Cloud 24/7 phục vụ Sếp Đạt]'."
-
-    )
+        "PHONG CÁCH GIAO TIẾP & NGUYÊN TẮC PHỤC VỤ:\n1. LỜI CHÀO GIAO BAN (QUAN TRỌNG): Khi Sếp chào hỏi (alo, em ơi, chào, hi...) hoặc mở đầu, chỉ đáp lại đúng 1 câu tác phong giao ban dứt khoát: '🫡 Dạ em chào Sếp Đạt! Trực ban Sổ Master sẵn sàng tiếp nhận nhiệm vụ ạ.' Tuyệt đối KHÔNG chúc tụng dài dòng, KHÔNG liệt kê tính năng làm choán màn hình điện thoại.\n2. Khi Sếp hỏi nghiệp vụ cụ thể: Trả lời đi thẳng vào trọng tâm, tối đa 2-5 dòng súc tích, chuyên nghiệp.\n3. Số liệu kế toán chuẩn xác tuyệt đối, dùng dấu chấm phân cách hàng nghìn (ví dụ: 100.076.124 đ, 18.392.400 đ).\n    )
 
     full_prompt = f"{system_instruction}\n\nYÊU CẦU CỦA GIÁM ĐỐC:\n{prompt_text}"
 
@@ -1246,11 +1232,8 @@ def process_user_query(text: str, caller_name: str = "Sếp") -> str:
 
     # 0. Xu ly cau chao hoi ngan hoac goi bot (alo, oi, em oi, chao)
 
-    if lower_text in ["alo", "a lô", "ơi", "em ơi", "em oi", "hi", "hello", "chào em", "chao em"]:
-
-        return (
-
-            f"🌸 DẠ EM CHÀO {caller_name.upper()} Ạ! ✨\n"
+    if lower_text in ["alo", "a lô", "ơi", "em ơi", "em oi", "hi", "hello", "chào em", "chao em", "chào", "chao"]:
+        return f"🫡 Dạ em nghe {caller_name}! Trực ban Sổ Master 24/7 sẵn sàng tiếp nhận nhiệm vụ ạ."} Ạ! ✨\n"
 
             f"Em là Trợ lý Kế toán Trưởng luôn túc trực 24/7 phục vụ {caller_name} đây ạ!\n\n"
 
@@ -1355,8 +1338,7 @@ def process_user_query(text: str, caller_name: str = "Sếp") -> str:
 
     # 2.1 Bật lại menu bàn phím
     if lower_text in ["/menu", "menu", "bàn phím", "ban phim", "nút", "nut"]:
-        return (
-            f"📱 DẠ EM GỬI {caller_name.upper()} BÀN PHÍM TÁC VỤ 1 CHẠM Ạ! ✨\n"
+        return f"🫡 Dạ em gửi {caller_name} bàn phím tác vụ 1 chạm bên dưới ạ!"} BÀN PHÍM TÁC VỤ 1 CHẠM Ạ! ✨\n"
             "--------------------------------------------------\n"
             "Sếp chạm trực tiếp vào các nút bên dưới đáy màn hình để xem nhanh báo cáo nhé ạ:\n"
             "• 🚦 5 Đèn Báo Quản Trị: Xem lướt sức khỏe công ty trong 2 giây\n"
@@ -1691,17 +1673,7 @@ def handle_telegram_message(msg: dict):
 
             if is_admin:
 
-                welcome_admin = (
-
-                    "🌸 DẠ EM CHÀO SẾP ĐẠT Ạ! ✨\n"
-
-                    "--------------------------------------------------\n"
-
-                    "Mã bảo vệ nội bộ chính xác 100%! Em đã lưu định danh Mr. Phạm Đạt - CEO vào hệ thống Cloud 24/7 rồi ạ.\n"
-
-                    "Từ bây giờ em luôn túc trực ngày đêm để phục vụ và đồng hành cùng Sếp nhé! 😊"
-
-                )
+                welcome_admin = "🫡 DẠ EM CHÀO SẾP ĐẠT! Trực ban Sổ Master 24/7 sẵn sàng tiếp nhận nhiệm vụ ạ." 
 
                 telegram_send_message(chat_id, welcome_admin)
 
@@ -1810,47 +1782,12 @@ def handle_telegram_message(msg: dict):
     # Lệnh Menu / Giới thiệu
 
     if text.lower() in ["/start", "/help", "menu", "giúp"]:
-
-        greeting = f"🌸 DẠ EM CHÀO {caller_name.upper()}! CHÚC {caller_name.upper()} MỘT NGÀY THẬT NHIỀU MAY MẮN VÀ THUẬN LỢI Ạ! ✨\n"
-
         menu_text = (
-
-            f"{greeting}"
-
-            "--------------------------------------------------\n"
-
-            "Em là Trợ lý Kế toán Trưởng AI Cloud 24/7 của Công ty Kiến Trúc Ngọc Hà.\n\n"
-
-            f"{caller_name} có thể trò chuyện tự nhiên hoặc dùng các lệnh nhanh sau:\n"
-
-            "• 📊 /baocao : Báo cáo cân đối 5 Khối Quản trị Sổ Master\n"
-
-            "• 💰 /tienve  : Tình hình tiền về ACB & HĐ cần xuất bù\n"
-
-            "• 🤝 /congno  : Chi tiết công nợ 11 Nhà cung cấp\n"
-
-            "• 📦 /tonkho  : Kiểm tra tồn kho tổng thể & chống âm kho\n"
-
-            "• 🧾 /hoadon  : Tình hình hóa đơn đầu ra mới nhất\n"
-
-            "• ⚡ /sync    : Làm mới dữ liệu tức thì từ OneDrive\n"
-
-            "• ℹ️ /status  : Trạng thái máy chủ Cloud 24/7\n\n"
-
-            f"💡 Hoặc {caller_name} cứ hỏi tự nhiên như:\n"
-
-            "👉 \"Hôm nay Hoàng Hà và DHL công nợ thế nào em?\"\n"
-
-            "👉 \"Kiểm tra tồn kho mã BT5018 giúp chị nhé\"\n"
-
-            "👉 \"Có khoản tiền về nào chưa xuất hóa đơn không?\"\n\n"
-
-            f"Bất cứ lúc nào {caller_name} cần, em luôn ở đây sẵn sàng phục vụ 24/7 ạ! 😊"
-
+            f"🫡 DẠ EM CHÀO {caller_name.upper()}!\n"
+            "Trực ban Sổ Master 24/7 sẵn sàng tiếp nhận nhiệm vụ ạ. ✨\n"
+            "(Sếp chạm nút chức năng bên dưới hoặc nhắn trực tiếp nội dung nhé ạ!)"
         )
-
         telegram_send_message(chat_id, menu_text)
-
         return
 
     if text.lower() in ["/status", "status", "trang thai"]:
