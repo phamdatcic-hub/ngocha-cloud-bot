@@ -2468,7 +2468,10 @@ def process_user_query(text: str, caller_name: str = "Sếp") -> str:
 
 
     if lower_text in ["alo", "a lô", "ơi", "em ơi", "em oi", "hi", "hello", "chào em", "chao em", "chào", "chao"]:
-        return f"🫡 Dạ em nghe {caller_name}! Trực ban Sổ Master 24/7 sẵn sàng tiếp nhận nhiệm vụ ạ."
+        return (
+            f"🫡 Dạ em nghe {caller_name}! Trực ban Sổ Master 24/7 sẵn sàng tiếp nhận nhiệm vụ ạ. ✨\n\n"
+            "👉 Sếp chạm nhanh 6 nút [Menu Tra Soát Nhanh] bên dưới (5 Đèn Báo, Dòng Tiền, Công Nợ NCC, Công Nợ KH, Tồn Kho, Soạn HĐ) hoặc nhắn trực tiếp nội dung để em kiểm tra ngay nhé ạ! 😊"
+        )
 
     # 0.0 Nhan dien lenh Chuyen ban nhap / VietInvoice / Ky so
     if any(k in lower_text for k in ["vietinvoice", "bản nháp", "ban nhap", "chuyển bản nháp", "chuyen ban nhap", "lên vietinvoice", "len vietinvoice", "ký số", "ky so", "đồng ý, chuyển", "dong y, chuyen", "đã chuyển chưa", "chuyển chưa"]):
@@ -3119,42 +3122,18 @@ def telegram_api_call(method: str, params: dict = None, data: dict = None):
 
 
 
-def telegram_send_message(chat_id: int, text: str):
-
-
-
-    """Gửi tin nhắn Telegram an toàn, tự động chia nhỏ nếu vượt quá 3800 ký tự"""
-
-
-
+def telegram_send_message(chat_id: int, text: str, reply_markup: dict = KEYBOARD_5_DEN_BAO):
+    """Gửi tin nhắn Telegram an toàn, tự động chia nhỏ nếu vượt quá 3800 ký tự và luôn gắn bàn phím 1 chạm"""
     if not text:
-
-
-
         return None
-
-
-
     max_len = 3800
-
-
-
     chunks = [text[i:i+max_len] for i in range(0, len(text), max_len)]
-
-
-
     last_res = None
-
-
-
-    for chunk in chunks:
-
-
-
-        last_res = telegram_api_call("sendMessage", data={"chat_id": chat_id, "text": chunk})
-
-
-
+    for idx, chunk in enumerate(chunks):
+        payload = {"chat_id": chat_id, "text": chunk}
+        if idx == len(chunks) - 1 and reply_markup:
+            payload["reply_markup"] = reply_markup
+        last_res = telegram_api_call("sendMessage", data=payload)
     return last_res
 
 
@@ -3501,9 +3480,21 @@ def handle_telegram_message(msg: dict):
 
     if text.lower() in ["/start", "/help", "menu", "giúp"]:
         menu_text = (
-            f"🫡 DẠ EM CHÀO {caller_name.upper()}!\n"
-            "Trực ban Sổ Master 24/7 sẵn sàng tiếp nhận nhiệm vụ ạ. ✨\n"
-            "(Sếp chạm nút chức năng bên dưới hoặc nhắn trực tiếp nội dung nhé ạ!)"
+            f"🫡 DẠ EM CHÀO {caller_name.upper()}! ✨\n"
+            "Trực ban Sổ Master 24/7 sẵn sàng tiếp nhận nhiệm vụ ạ.\n\n"
+            "📋 HƯỚNG DẪN CHỌN MENU TRA SOÁT NHANH (1 CHẠM):\n"
+            "--------------------------------------------------\n"
+            "Sếp chạm trực tiếp vào 6 nút bấm dưới đáy màn hình:\n"
+            "• [ 🚦 5 Đèn Báo Quản Trị ]: Micro-Dashboard 10 dòng xem nhanh sức khỏe công ty\n"
+            "• [ 💰 Dòng Tiền & Tiền Về ]: Kiểm tra tiền về ACB & các khoản chờ xuất hóa đơn\n"
+            "• [ 🤝 Công Nợ 11 NCC     ]: Nợ phải trả & tiền ứng gối đầu 11 nhà cung cấp\n"
+            "• [ ⏳ Công Nợ KH (TK 131)]: Tình hình thu nợ khách hàng & xuất hóa đơn ra\n"
+            "• [ 📦 Tồn Kho Chống Âm   ]: Lưu tồn mét tấm PVC & cảnh báo các mã sắp hết\n"
+            "• [ 🧾 Soạn HĐ Nháp       ]: Đề xuất mặt hàng & bản nháp HĐĐT VietInvoice\n\n"
+            "💡 MẸO SỬ DỤNG:\n"
+            "👉 Bàn phím 6 nút trên luôn hiện sẵn dưới ô nhập chữ. Nếu bị thu gọn, Sếp chạm vào biểu tượng [::] bên cạnh ô gõ để mở lại.\n"
+            "👉 Hoặc Sếp có thể bấm nút [Menu] (dấu /) góc trái để chọn nhanh lệnh.\n"
+            "👉 Ngoài ra, Sếp cứ nhắn tự nhiên bất kỳ nội dung nào (ví dụ: 'tồn kho BT5518', 'công nợ Hoàng Hà'), em sẽ tra cứu và báo cáo ngay ạ! 😊"
         )
         telegram_send_message(chat_id, menu_text)
         return
