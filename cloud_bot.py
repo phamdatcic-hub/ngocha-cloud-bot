@@ -65,8 +65,8 @@ AUTHENTICATED_USERS = {
     str(ADMIN_CHAT_ID): {
         "name": "Sếp Đạt",
         "full_name": "Mr. Phạm Đạt",
-        "role": "CEO (Part-time)",
-        "note": "Lãnh đạo điều hành chiến lược, kết nối trực tiếp trên Telegram, không có trong bảng lương",
+        "role": "CEO",
+        "note": "Lãnh đạo điều hành chiến lược, kết nối trực tiếp trên Telegram",
         "authenticated_at": "2026-11-20T00:00:00"
     }
 }
@@ -526,9 +526,9 @@ def call_gemini_api(prompt_text: str, context_facts: str) -> str:
     now_str = datetime.now().strftime("%H:%M:%S ngày %d/%m/%Y")
     system_instruction = (
         "Bạn là Trợ lý Kế toán Trưởng thân thiết, chu đáo, nhiệt tình, thông minh và tận tâm của Công ty TNHH TM&DV Kiến Trúc Ngọc Hà (MST: 0601309667).\n"
-        "Người bạn đang trực tiếp trò chuyện, kết nối trên Telegram và phục vụ chỉ đạo cao nhất là Mr. Phạm Đạt - CEO (Part-time, không có trong bảng lương) - thường gọi là Sếp Đạt / Anh Đạt / Sếp.\n"
+        "Người bạn đang trực tiếp trò chuyện, kết nối trên Telegram và phục vụ chỉ đạo cao nhất là Mr. Phạm Đạt - CEO - thường gọi là Sếp Đạt / Anh Đạt / Sếp.\n"
         "Cơ cấu nhân sự công ty:\n"
-        "- Mr. Phạm Đạt: CEO (Part-time, không có trong bảng lương) - Người đang trực tiếp chỉ đạo, làm việc với bạn trên Telegram\n"
+        "- Mr. Phạm Đạt: CEO - Người đang trực tiếp chỉ đạo, làm việc với bạn trên Telegram\n"
         "- Đặng Thị Hà: Giám đốc điều hành pháp lý (có trong bảng lương)\n"
         "- Đặng Thu Quỳnh: Kế toán (có trong bảng lương)\n"
         "- Đặng Thái Dương: Thủ kho (có trong bảng lương)\n\n"
@@ -803,7 +803,7 @@ def handle_telegram_message(msg: dict):
         if text_input == BOT_PASSCODE:
             # Nhập đúng Passcode -> Cấp quyền vĩnh viễn
             is_admin = (chat_id == ADMIN_CHAT_ID)
-            role = "CEO (Part-time)" if is_admin else "Nhân sự"
+            role = "CEO" if is_admin else "Nhân sự"
             user_name = "Sếp Đạt" if is_admin else from_user
 
             AUTHENTICATED_USERS[str_chat_id] = {
@@ -817,7 +817,7 @@ def handle_telegram_message(msg: dict):
                 welcome_admin = (
                     "🌸 DẠ EM CHÀO SẾP ĐẠT Ạ! ✨\n"
                     "--------------------------------------------------\n"
-                    "Mã bảo vệ nội bộ chính xác 100%! Em đã lưu định danh Mr. Phạm Đạt - CEO (Part-time) vào hệ thống Cloud 24/7 rồi ạ.\n"
+                    "Mã bảo vệ nội bộ chính xác 100%! Em đã lưu định danh Mr. Phạm Đạt - CEO vào hệ thống Cloud 24/7 rồi ạ.\n"
                     "Từ bây giờ em luôn túc trực ngày đêm để phục vụ và đồng hành cùng Sếp nhé! 😊"
                 )
                 telegram_send_message(chat_id, welcome_admin)
