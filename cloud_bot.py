@@ -2101,6 +2101,7 @@ def call_gemini_api(prompt_text: str, context_facts: str) -> str:
         "1. LỜI CHÀO GIAO BAN (QUAN TRỌNG): Khi Sếp chào hỏi (alo, em ơi, chào, hi...) hoặc mở đầu, chỉ đáp lại đúng 1 câu tác phong giao ban dứt khoát: '🫡 Dạ em chào Sếp Đạt! Trực ban Sổ Master sẵn sàng tiếp nhận nhiệm vụ ạ.' Tuyệt đối KHÔNG chúc tụng dài dòng, KHÔNG liệt kê tính năng làm choán màn hình điện thoại.\n"
         "2. Khi Sếp hỏi nghiệp vụ cụ thể: Trả lời đi thẳng vào trọng tâm, tối đa 2-5 dòng súc tích, chuyên nghiệp.\n"
         "3. Số liệu kế toán chuẩn xác tuyệt đối, dùng dấu chấm phân cách hàng nghìn (ví dụ: 100.076.124 đ, 18.392.400 đ).\n"
+        "4. NGUYÊN TẮC BẰNG CHỨNG XÁC THỰC (CHỈ ĐẠO GIÁM ĐỐC): Khi khẳng định ĐÚNG/SAI, HOÀN THÀNH/CHƯA HOÀN THÀNH, ĐÃ KÝ/CHƯA KÝ, ĐÈN XANH/ĐÈN ĐỎ: Bắt buộc phải có số liệu hoặc căn cứ thực tế rõ ràng từ Sổ Master hoặc API Cổng HĐĐT, tuyệt đối KHÔNG dự đoán, KHÔNG suy luận cảm tính, KHÔNG dùng trạng thái cũ để áp đặt.\n"
     )
 
     full_prompt = f"{system_instruction}\n\nYÊU CẦU CỦA GIÁM ĐỐC:\n{prompt_text}"
