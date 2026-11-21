@@ -1119,7 +1119,7 @@ def call_gemini_api(prompt_text: str, context_facts: str) -> str:
 
     # Danh sách các model ổn định để tự động thử
 
-    models_to_try = ["gemini-flash-latest", "gemini-3.8-flash", "gemini-3.5-flash"]
+    models_to_try = ["gemini-3.5-flash-lite", "gemini-flash-lite-latest", "gemini-3.1-flash-lite"]
 
 
 
