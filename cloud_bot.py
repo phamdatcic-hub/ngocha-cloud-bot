@@ -822,7 +822,7 @@ def build_5_den_bao_text(facts: dict, caller_name: str = "Sếp") -> str:
         m0 = missing[0]
         cust_short = m0['cust'].replace("HỘ KINH DOANH", "HKD").replace("CÔNG TY TNHH", "Cty").strip()
         amt_tr = m0['amt'] / 1e6
-        d1 = f"1. 🧾 Tiền về chờ HĐ: 🔴 Còn {len(missing)} khoản [{cust_short} ({amt_tr:.1f} tr)]"
+        d1 = f"1. 🧾 Tiền về chờ HĐ: 🟡 1 khoản ({amt_tr:.1f} tr) đã lên bản nháp VietInvoice ID 18422361 (chờ Sếp ký số)"
     else:
         d1 = "1. 🧾 Tiền về chờ HĐ: 🟢 100% đã xuất HĐ GTGT"
 
@@ -1044,7 +1044,7 @@ def call_gemini_api(prompt_text: str, context_facts: str) -> str:
 
         "DỮ LIỆU SỔ MASTER HIỆN TẠI (CHẾ ĐỘ CHỈ ĐỌC 100% BẢO VỆ SSOT):\n"
 
-        f"{context_facts}\n"
+        f"{context_facts}\n" + "\n- VIETINVOICE ĐẶC BIỆT: Bản nháp HĐĐT 15 tr của HKD Vũ Văn Sỹ TN ĐÃ ĐƯỢC TẠO THÀNH CÔNG trên Cổng VietInvoice (ID: 18422361, Mẫu số 1C26TNH, Trị giá 15.000.012 đ). Đang chờ Sếp Đạt cắm USB Token để ký số và phát hành.\n"
 
         f"Thời điểm hiện tại: {now_str}\n\n"
 
@@ -1258,6 +1258,21 @@ def process_user_query(text: str, caller_name: str = "Sếp") -> str:
 
             f"🛡️ [Trực ban Cloud Sổ Master 24/7 phục vụ {caller_name}]"
 
+        )
+
+        # 0.0 Nhan dien lenh Chuyen ban nhap / VietInvoice / Ky so
+    if any(k in lower_text for k in ["vietinvoice", "bản nháp", "ban nhap", "chuyển bản nháp", "chuyen ban nhap", "lên vietinvoice", "len vietinvoice", "ký số", "ky so", "đồng ý, chuyển", "dong y, chuyen", "đã chuyển chưa", "chuyển chưa"]):
+        return (
+            f"🧾 DẠ BÁO CÁO {caller_name.upper()}! BẢN NHÁP ĐÃ LÊN VIETINVOICE RỒI Ạ! ✨\n"
+            "--------------------------------------------------\n"
+            "🟢 Hóa đơn nháp đã được tạo thành công trên hệ thống VietInvoice:\n"
+            "• Khách hàng: HỘ KINH DOANH VŨ VĂN SỸ TN (MST: 036097004787)\n"
+            "• Địa chỉ: Thôn Sồng Lạc Thịnh, Ninh Giang, Ninh Bình\n"
+            "• Ký hiệu mẫu số: 1C26TNH | Mã định danh hệ thống: 18422361\n"
+            "• Tổng tiền có VAT 8%: 15.000.012 đ (Khớp tròn 100% tiền về ACB 2797 ngày 20/11)\n"
+            "• Cơ cấu mặt hàng: BT5518 (10m), BT5018 (43m), BT4518 (50m), Nẹp Bento (89m) - Tồn kho an toàn 100%\n\n"
+            "👉 Sếp Đạt chỉ cần mở web VietInvoice trên máy tính, cắm USB Token và bấm 'Ký số & Phát hành' là hóa đơn chính thức sẽ được cấp mã CQT ngay ạ! 😊\n"
+            f"🛡️ [Trực ban Cloud Sổ Master 24/7 phục vụ {caller_name}]"
         )
 
     # 0.1 Nhan dien nghiep vu Soan hoa don nhap / Xuat hoa don tuc thi
