@@ -191,6 +191,16 @@ TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
 
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
+if not GEMINI_API_KEY:
+    try:
+        cred_path = os.path.expanduser(r"~\.dsh\.credentials.yaml")
+        if os.path.exists(cred_path):
+            with open(cred_path, "r", encoding="utf-8") as f:
+                m = re.search(r"GEMINI_API_KEY:\s*(\S+)", f.read())
+                if m:
+                    GEMINI_API_KEY = m.group(1).strip()
+    except Exception:
+        pass
 
 
 
@@ -1957,6 +1967,135 @@ def build_summary_text(facts: dict) -> str:
 
 
 
+
+def build_compact_ledger_index(wb) -> str:
+    """
+    Xay dung Muc luc dien tu tinh gon (5 Khoi du lieu cot loi) tu So Master.
+    Cho phep Gemini Flash doc tron ven 157 HD ban ra, 70 HD mua vao, cong no 11 NCC va ton kho.
+    Dung luong ~24 KB (~6.000 tokens), chay trong 0.35 giay.
+    """
+    parts = []
+
+    # 1. 157 HOA DON BAN RA (Forward-fill gop nhieu dong)
+    if "02 HD Dau Ra" in wb.sheetnames:
+        ws_out = wb["02 HD Dau Ra"]
+        current_inv = None
+        invoices_ra = {}
+        for r in range(4, ws_out.max_row + 1):
+            inv_cell = ws_out.cell(r, 8).value
+            if inv_cell is not None and str(inv_cell).strip() not in ["", "None"]:
+                inv_no = str(inv_cell).strip().zfill(8)
+                current_inv = inv_no
+                invoices_ra[current_inv] = {
+                    "no": current_inv,
+                    "cust": str(ws_out.cell(r, 4).value or "").strip(),
+                    "mst": str(ws_out.cell(r, 5).value or "").strip(),
+                    "date": str(ws_out.cell(r, 9).value or "")[:10],
+                    "acb": str(ws_out.cell(r, 24).value or "").strip(),
+                    "total": 0.0,
+                    "skus": []
+                }
+            if current_inv:
+                qty = float(ws_out.cell(r, 13).value or 0)
+                price = float(ws_out.cell(r, 14).value or 0)
+                vat = float(ws_out.cell(r, 16).value or 0.08)
+                line_val = round(qty * price * (1 + vat))
+                invoices_ra[current_inv]["total"] += line_val
+                p = str(ws_out.cell(r, 10).value or "").strip()
+                if p and p not in invoices_ra[current_inv]["skus"]:
+                    invoices_ra[current_inv]["skus"].append(p)
+
+        lines_ra = []
+        for k in sorted(invoices_ra.keys()):
+            inv = invoices_ra[k]
+            skus_str = ", ".join(inv["skus"][:3])
+            amt_str = f"{int(inv['total']):,} đ"
+            lines_ra.append(
+                f"{k} | {inv['date']} | {inv['cust']} | MST:{inv['mst']} | {amt_str} | {skus_str} | {inv['acb']}"
+            )
+        parts.append(f"=== MỤC LỤC {len(lines_ra)} HÓA ĐƠN BÁN RA NĂM 2026 ===\n" + "\n".join(lines_ra))
+
+    # 2. 70 HOA DON MUA VAO (Forward-fill gop nhieu dong)
+    if "01 HD Dau Vao" in wb.sheetnames:
+        ws_in = wb["01 HD Dau Vao"]
+        current_inv_in = None
+        invoices_vao = {}
+        for r in range(4, ws_in.max_row + 1):
+            inv_cell = ws_in.cell(r, 7).value
+            if inv_cell is not None and str(inv_cell).strip() not in ["", "None"]:
+                inv_no = str(inv_cell).strip().zfill(8)
+                current_inv_in = inv_no
+                invoices_vao[current_inv_in] = {
+                    "no": current_inv_in,
+                    "ncc": str(ws_in.cell(r, 3).value or "").strip(),
+                    "name": str(ws_in.cell(r, 4).value or "").strip(),
+                    "mst": str(ws_in.cell(r, 5).value or "").strip(),
+                    "date": str(ws_in.cell(r, 8).value or "")[:10],
+                    "acb": str(ws_in.cell(r, 21).value or "").strip(),
+                    "total": 0.0,
+                    "skus": []
+                }
+            if current_inv_in:
+                qty = float(ws_in.cell(r, 12).value or 0)
+                price = float(ws_in.cell(r, 13).value or 0)
+                vat = float(ws_in.cell(r, 15).value or 0.08)
+                line_val = round(qty * price * (1 + vat))
+                invoices_vao[current_inv_in]["total"] += line_val
+                p = str(ws_in.cell(r, 9).value or "").strip()
+                if p and p not in invoices_vao[current_inv_in]["skus"]:
+                    invoices_vao[current_inv_in]["skus"].append(p)
+
+        lines_vao = []
+        for k in sorted(invoices_vao.keys()):
+            inv = invoices_vao[k]
+            skus_str = ", ".join(inv["skus"][:3])
+            amt_str = f"{int(inv['total']):,} đ"
+            lines_vao.append(
+                f"{k} | {inv['date']} | NCC:{inv['ncc']} ({inv['name']}) | MST:{inv['mst']} | {amt_str} | {skus_str} | {inv['acb']}"
+            )
+        parts.append(f"=== MỤC LỤC {len(lines_vao)} HÓA ĐƠN MUA VÀO NĂM 2026 ===\n" + "\n".join(lines_vao))
+
+    # 3. CONG NO 11 NHA CUNG CAP (TK 331)
+    if "03 Đối Soát Công Nợ 11 NCC" in wb.sheetnames:
+        ws_cn = wb["03 Đối Soát Công Nợ 11 NCC"]
+        lines_cn = []
+        for r in range(4, ws_cn.max_row + 1):
+            code = str(ws_cn.cell(r, 2).value or "").strip()
+            if not code:
+                continue
+            name = str(ws_cn.cell(r, 3).value or "").strip()
+            mst = str(ws_cn.cell(r, 4).value or "").strip()
+            buy = float(ws_cn.cell(r, 6).value or 0)
+            paid = float(ws_cn.cell(r, 8).value or 0)
+            debt = float(ws_cn.cell(r, 9).value or 0)
+            pre = float(ws_cn.cell(r, 10).value or 0)
+            lines_cn.append(
+                f"{code} ({name} - MST:{mst}): Mua {int(buy):,} đ | Đã trả ACB {int(paid):,} đ | Nợ phải trả: {int(debt):,} đ | Đã ứng trước: {int(pre):,} đ"
+            )
+        parts.append("=== BẢNG CÔNG NỢ 11 NHÀ CUNG CẤP (TK 331) ===\n" + "\n".join(lines_cn))
+
+    # 4. TON KHO 65 MA PVC & CANH BAO AM
+    if "03 Nhap Xuat Ton" in wb.sheetnames:
+        ws_tk = wb["03 Nhap Xuat Ton"]
+        lines_tk = []
+        for r in range(4, ws_tk.max_row + 1):
+            code = str(ws_tk.cell(r, 2).value or "").strip()
+            if not code:
+                continue
+            ton = ws_tk.cell(r, 7).value
+            try:
+                ton_val = float(ton or 0)
+            except Exception:
+                ton_val = 0.0
+            warn = str(ws_tk.cell(r, 10).value or "").strip()
+            if "ÂM" in warn.upper() or ton_val < 30:
+                lines_tk.append(f"{code}: Tồn {ton_val:.1f} ({warn})")
+        if lines_tk:
+            parts.append("=== CẢNH BÁO TỒN KHO & MÃ ĐẶC CHÚ Ý ===\n" + "\n".join(lines_tk))
+
+    return "\n\n".join(parts)
+
+
 def get_master_data_cached(force_reload=False) -> dict:
 
 
@@ -2001,6 +2140,7 @@ def get_master_data_cached(force_reload=False) -> dict:
 
 
 
+            ledger_index = build_compact_ledger_index(wb)
             MASTER_CACHE = {
 
 
@@ -2010,6 +2150,7 @@ def get_master_data_cached(force_reload=False) -> dict:
 
 
                 "summary_text": summary,
+                "ledger_index_text": ledger_index,
 
 
 
@@ -2184,7 +2325,7 @@ def call_gemini_api(prompt_text: str, context_facts: str) -> str:
 
 
 
-    models_to_try = ["gemini-3.5-flash-lite", "gemini-flash-lite-latest", "gemini-3.1-flash-lite"]
+    models_to_try = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-flash-latest"]
 
 
 
@@ -2240,7 +2381,7 @@ def call_gemini_api(prompt_text: str, context_facts: str) -> str:
 
 
 
-            with urllib.request.urlopen(req, timeout=8) as resp:
+            with urllib.request.urlopen(req, timeout=25) as resp:
 
 
 
@@ -3076,7 +3217,9 @@ def process_user_query(text: str, chat_id: int = None, caller_name: str = "Sếp
 
 
 
-    ai_reply = call_gemini_api(text, facts_summary)
+    ledger_index = cache.get("ledger_index_text", "")
+    full_facts = f"{facts_summary}\n\n{ledger_index}" if ledger_index else facts_summary
+    ai_reply = call_gemini_api(text, full_facts)
 
 
 
