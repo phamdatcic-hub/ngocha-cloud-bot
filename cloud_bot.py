@@ -1996,12 +1996,15 @@ def build_compact_ledger_index(wb) -> str:
                     "skus": []
                 }
             if current_inv:
+                p = str(ws_out.cell(r, 10).value or "").strip()
                 qty = float(ws_out.cell(r, 13).value or 0)
                 price = float(ws_out.cell(r, 14).value or 0)
                 vat = float(ws_out.cell(r, 16).value or 0.08)
+                if not p and qty == 0 and price == 0:
+                    current_inv = None
+                    continue
                 line_val = round(qty * price * (1 + vat))
                 invoices_ra[current_inv]["total"] += line_val
-                p = str(ws_out.cell(r, 10).value or "").strip()
                 if p and p not in invoices_ra[current_inv]["skus"]:
                     invoices_ra[current_inv]["skus"].append(p)
 
@@ -2036,12 +2039,15 @@ def build_compact_ledger_index(wb) -> str:
                     "skus": []
                 }
             if current_inv_in:
+                p = str(ws_in.cell(r, 9).value or "").strip()
                 qty = float(ws_in.cell(r, 12).value or 0)
                 price = float(ws_in.cell(r, 13).value or 0)
                 vat = float(ws_in.cell(r, 15).value or 0.08)
+                if not p and qty == 0 and price == 0:
+                    current_inv_in = None
+                    continue
                 line_val = round(qty * price * (1 + vat))
                 invoices_vao[current_inv_in]["total"] += line_val
-                p = str(ws_in.cell(r, 9).value or "").strip()
                 if p and p not in invoices_vao[current_inv_in]["skus"]:
                     invoices_vao[current_inv_in]["skus"].append(p)
 
@@ -3235,7 +3241,8 @@ def process_user_query(text: str, chat_id: int = None, caller_name: str = "Sếp
 
 
 
-        return f"{ai_reply}\n\n☁️ *[Trực ban Gemini Cloud 24/7 - PC Offline]*"
+        facts_ts = cache.get("raw_facts", {}).get("timestamp") or cache.get("timestamp") or "Thời gian thực"
+        return f"{ai_reply}\n\n☁️ *[Trực ban Gemini Cloud 24/7 - Dữ liệu Master chốt: {facts_ts}]*"
 
 
 
